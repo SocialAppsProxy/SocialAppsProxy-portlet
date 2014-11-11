@@ -1,0 +1,8 @@
+<?xml version="1.0"?>
+
+<beans xmlns="http://www.springframework.org/schema/beans" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" default-destroy-method="destroy" default-init-method="afterPropertiesSet" xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans-3.0.xsd">
+	<bean id="com.wordpress.metaphorm.authProxy.sb.service.OAuthConnectionLocalService" class="com.wordpress.metaphorm.authProxy.sb.service.impl.OAuthConnectionLocalServiceImpl" />
+	<bean id="com.wordpress.metaphorm.authProxy.sb.service.persistence.OAuthConnectionPersistence" class="com.wordpress.metaphorm.authProxy.sb.service.persistence.OAuthConnectionPersistenceImpl" parent="basePersistence" />
+	<bean id="com.wordpress.metaphorm.authProxy.sb.service.OAuthProviderLocalService" class="com.wordpress.metaphorm.authProxy.sb.service.impl.OAuthProviderLocalServiceImpl" />
+	<bean id="com.wordpress.metaphorm.authProxy.sb.service.persistence.OAuthProviderPersistence" class="com.wordpress.metaphorm.authProxy.sb.service.persistence.OAuthProviderPersistenceImpl" parent="basePersistence" />
+</beans>

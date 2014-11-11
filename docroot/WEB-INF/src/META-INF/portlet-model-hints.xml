@@ -1,0 +1,33 @@
+<?xml version="1.0"?>
+
+<model-hints>
+	<model name="com.wordpress.metaphorm.authProxy.sb.model.OAuthConnection">
+		<field name="connectionId" type="long" />
+		<field name="companyId" type="long" />
+		<field name="groupId" type="long" />
+		<field name="userId" type="long" />
+		<field name="userName" type="String" />
+		<field name="createDate" type="Date" />
+		<field name="modifiedDate" type="Date" />
+		<field name="token" type="String" />
+		<field name="tokenSecret" type="String" />
+		<field name="realm" type="String" />
+		<field name="phase" type="int" />
+	</model>
+	<model name="com.wordpress.metaphorm.authProxy.sb.model.OAuthProvider">
+		<field name="providerId" type="long" />
+		<field name="userId" type="long" />
+		<field name="userName" type="String" />
+		<field name="createDate" type="Date" />
+		<field name="modifiedDate" type="Date" />
+		<field name="consumerKey" type="String" />
+		<field name="consumerSecret" type="String" />
+		<field name="realm" type="String" />
+		<field name="requestTokenURL" type="String" />
+		<field name="authoriseURL" type="String" />
+		<field name="accessTokenURL" type="String" />
+		<field name="protocolVersion" type="String" />
+		<field name="preemptiveAuthURLPattern" type="String" />
+		<field name="useHTTPS" type="boolean" />
+	</model>
+</model-hints>

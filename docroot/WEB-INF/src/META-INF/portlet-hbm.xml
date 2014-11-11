@@ -1,0 +1,41 @@
+<?xml version="1.0"?>
+<!DOCTYPE hibernate-mapping PUBLIC "-//Hibernate/Hibernate Mapping DTD 3.0//EN" "http://hibernate.sourceforge.net/hibernate-mapping-3.0.dtd">
+
+<hibernate-mapping default-lazy="false" auto-import="false">
+	<import class="com.wordpress.metaphorm.authProxy.sb.model.OAuthConnection" />
+	<import class="com.wordpress.metaphorm.authProxy.sb.model.OAuthProvider" />
+	<class name="com.wordpress.metaphorm.authProxy.sb.model.impl.OAuthConnectionImpl" table="OAuthProxy_OAuthConnection">
+		<id name="connectionId" type="long">
+			<generator class="assigned" />
+		</id>
+		<property name="companyId" type="com.liferay.portal.dao.orm.hibernate.LongType" />
+		<property name="groupId" type="com.liferay.portal.dao.orm.hibernate.LongType" />
+		<property name="userId" type="com.liferay.portal.dao.orm.hibernate.LongType" />
+		<property name="userName" type="com.liferay.portal.dao.orm.hibernate.StringType" />
+		<property name="createDate" type="org.hibernate.type.TimestampType" />
+		<property name="modifiedDate" type="org.hibernate.type.TimestampType" />
+		<property name="token" type="com.liferay.portal.dao.orm.hibernate.StringType" />
+		<property name="tokenSecret" type="com.liferay.portal.dao.orm.hibernate.StringType" />
+		<property name="realm" type="com.liferay.portal.dao.orm.hibernate.StringType" />
+		<property name="phase" type="com.liferay.portal.dao.orm.hibernate.IntegerType" />
+	</class>
+	<class name="com.wordpress.metaphorm.authProxy.sb.model.impl.OAuthProviderImpl" table="OAuthProxy_OAuthProvider">
+		<cache usage="read-write" />
+		<id name="providerId" type="long">
+			<generator class="assigned" />
+		</id>
+		<property name="userId" type="com.liferay.portal.dao.orm.hibernate.LongType" />
+		<property name="userName" type="com.liferay.portal.dao.orm.hibernate.StringType" />
+		<property name="createDate" type="org.hibernate.type.TimestampType" />
+		<property name="modifiedDate" type="org.hibernate.type.TimestampType" />
+		<property name="consumerKey" type="com.liferay.portal.dao.orm.hibernate.StringType" />
+		<property name="consumerSecret" type="com.liferay.portal.dao.orm.hibernate.StringType" />
+		<property name="realm" type="com.liferay.portal.dao.orm.hibernate.StringType" />
+		<property name="requestTokenURL" type="com.liferay.portal.dao.orm.hibernate.StringType" />
+		<property name="authoriseURL" type="com.liferay.portal.dao.orm.hibernate.StringType" />
+		<property name="accessTokenURL" type="com.liferay.portal.dao.orm.hibernate.StringType" />
+		<property name="protocolVersion" type="com.liferay.portal.dao.orm.hibernate.StringType" />
+		<property name="preemptiveAuthURLPattern" type="com.liferay.portal.dao.orm.hibernate.StringType" />
+		<property name="useHTTPS" type="com.liferay.portal.dao.orm.hibernate.BooleanType" />
+	</class>
+</hibernate-mapping>

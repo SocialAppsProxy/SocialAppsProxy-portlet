@@ -1,0 +1,102 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- <!DOCTYPE service-builder PUBLIC "-//Liferay//DTD Service Builder 6.1.0//EN" "http://www.liferay.com/dtd/liferay-service-builder_6_1_0.dtd"> -->
+<service-builder
+	package-path="com.wordpress.metaphorm.authProxy.sb">
+	<author>stiansigvartsen</author>
+	<namespace>OAuthProxy</namespace>
+
+	<entity name="OAuthConnection" local-service="true" remote-service="false" cache-enabled="false">
+
+		<!-- PK fields -->
+
+		<column name="connectionId" type="long" primary="true" />
+		
+		<!-- Audit fields -->
+
+		<column name="companyId" type="long" />
+		<column name="groupId" type="long" />
+		<column name="userId" type="long" />
+		<column name="userName" type="String" />
+		<column name="createDate" type="Date" />
+		<column name="modifiedDate" type="Date" />
+		
+		<!-- Other fields -->
+
+		<column name="token" type="String" />
+		<column name="tokenSecret" type="String" />
+		<column name="realm" type="String" />
+		<column name="phase" type="int" />
+		
+        <!-- Order -->
+
+		<order by="asc">
+			<order-column name="realm" />
+		</order>		
+		
+		<!-- Finder methods -->
+
+		<finder name="realm" return-type="OAuthConnection">
+			<finder-column name="companyId" />
+			<finder-column name="groupId" />
+			<finder-column name="userId" />		
+			<finder-column name="realm" />
+		</finder>
+		
+		<finder name="userId" return-type="Collection">
+			<finder-column name="companyId" />
+			<finder-column name="groupId" />
+			<finder-column name="userId" />
+		</finder>
+
+	</entity>
+	
+	<entity name="OAuthProvider" local-service="true" remote-service="false">
+
+		<!-- PK fields -->
+
+		<column name="providerId" type="long" primary="true" />
+
+		<!-- Audit fields -->
+
+		<!-- 
+		<column name="companyId" type="long" />
+		 -->
+		<column name="userId" type="long" />
+		<column name="userName" type="String" />
+		<column name="createDate" type="Date" />
+		<column name="modifiedDate" type="Date" />
+
+		<!-- Other fields -->
+
+		<column name="consumerKey" type="String" />
+		<column name="consumerSecret" type="String" />
+		<column name="realm" type="String" />
+		<column name="requestTokenURL" type="String" />
+		<column name="authoriseURL" type="String" />
+		<column name="accessTokenURL" type="String" />
+		<column name="protocolVersion" type="String" />
+		<column name="preemptiveAuthURLPattern" type="String" />
+		<column name="useHTTPS" type="boolean" />
+		
+		<!-- 
+		<column name="field2" type="boolean" />
+		<column name="field3" type="int" />
+		<column name="field4" type="Date" />
+		<column name="field5" type="String" />
+		 -->
+
+        <column name="connectionId" type="Collection" entity="OAuthConnection" mapping-key="connectionId"></column>
+        
+        <!-- Order -->
+
+		<order by="asc">
+			<order-column name="realm" />
+		</order>
+
+		<!-- Finder methods -->
+
+		<finder name="Realm" return-type="OAuthProvider">
+			<finder-column name="realm" />
+		</finder>
+	</entity>
+</service-builder>

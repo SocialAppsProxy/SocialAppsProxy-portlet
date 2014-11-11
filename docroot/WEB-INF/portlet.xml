@@ -1,0 +1,81 @@
+<?xml version="1.0"?>
+
+<portlet-app xmlns="http://java.sun.com/xml/ns/portlet/portlet-app_2_0.xsd" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://java.sun.com/xml/ns/portlet/portlet-app_2_0.xsd http://java.sun.com/xml/ns/portlet/portlet-app_2_0.xsd" version="2.0">	
+		
+	<portlet>
+		<portlet-name>authproxyprovidersadmin</portlet-name>
+		<display-name>Social Apps Proxy Manager</display-name>
+		<portlet-class>
+			com.wordpress.metaphorm.authProxy.portlet.AuthProxyProvidersAdminPortlet
+		</portlet-class>
+		<init-param>
+			<name>view-template</name>
+			<value>/html/authproxyprovidersadmin/view.jsp</value>
+		</init-param>
+		<expiration-cache>0</expiration-cache>
+		<supports>
+			<mime-type>text/html</mime-type>
+			<portlet-mode>view</portlet-mode>
+		</supports>
+		<resource-bundle>content/Language</resource-bundle>
+		<portlet-info>
+			<title>Social Apps Proxy Manager</title>
+			<short-title>
+				Social Apps Proxy Manager
+			</short-title>
+			<keywords></keywords>
+		</portlet-info>
+		<security-role-ref>
+			<role-name>administrator</role-name>
+		</security-role-ref>
+		<!-- 
+		<security-role-ref>
+			<role-name>guest</role-name>
+		</security-role-ref>
+		<security-role-ref>
+			<role-name>power-user</role-name>
+		</security-role-ref>
+		<security-role-ref>
+			<role-name>user</role-name>
+		</security-role-ref>
+		 -->
+	</portlet>
+	
+	<portlet>
+		<portlet-name>authproxytokensadmin</portlet-name>
+		<display-name>Connected Apps and Services</display-name>
+		<portlet-class>
+			com.wordpress.metaphorm.authProxy.portlet.AuthProxyTokensAdminPortlet
+		</portlet-class>
+		<init-param>
+			<name>view-template</name>
+			<value>/html/authproxytokensadmin/view.jsp</value>
+		</init-param>
+		<expiration-cache>0</expiration-cache>
+		<supports>
+			<mime-type>text/html</mime-type>
+			<portlet-mode>view</portlet-mode>
+		</supports>
+		<resource-bundle>content/Language</resource-bundle>
+		<portlet-info>
+			<title>Connected Apps and Services</title>
+			<short-title>
+				Connected Apps and Services
+			</short-title>
+			<keywords></keywords>
+		</portlet-info>
+		<security-role-ref>
+			<role-name>administrator</role-name>
+		</security-role-ref>
+		<security-role-ref>
+			<role-name>guest</role-name>
+		</security-role-ref>
+		<security-role-ref>
+			<role-name>power-user</role-name>
+		</security-role-ref>
+		<security-role-ref>
+			<role-name>user</role-name>
+		</security-role-ref>
+	</portlet>	
+
+</portlet-app>

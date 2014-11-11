@@ -1,0 +1,21 @@
+<?xml version="1.0"?>
+<!-- <!DOCTYPE hook PUBLIC "-//Liferay//DTD Hook 6.2.0//EN" "http://www.liferay.com/dtd/liferay-hook_6_2_0.dtd"> -->
+
+<hook>
+	<portal-properties>portal.properties</portal-properties>
+	<!-- <portal-properties>portal.properties</portal-properties> -->
+	<servlet-filter>
+		<servlet-filter-name>AuthProxyServletFilter</servlet-filter-name>
+		<servlet-filter-impl>com.wordpress.metaphorm.authProxy.hook.AuthProxyServletFilter</servlet-filter-impl>
+		<init-param>
+			<param-name>hashSecret</param-name>
+			<param-value>change-me-to-something-random</param-value>
+		</init-param>
+	</servlet-filter>
+	<servlet-filter-mapping>
+		<servlet-filter-name>AuthProxyServletFilter</servlet-filter-name>
+		<before-filter>Invoker Filter - REQUEST</before-filter>
+		<url-pattern>/*</url-pattern>
+		<dispatcher>REQUEST</dispatcher>
+	</servlet-filter-mapping>
+</hook>
