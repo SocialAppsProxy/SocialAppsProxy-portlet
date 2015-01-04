@@ -1,4 +1,4 @@
-package com.wordpress.metaphorm.authProxy;
+package com.wordpress.metaphorm.authProxy.oauthClient.impl;
 
 /**
  * Copyright (c) 2014-present Stian Sigvartsen. All rights reserved.
@@ -22,12 +22,17 @@ package com.wordpress.metaphorm.authProxy;
 import com.liferay.portal.kernel.exception.SystemException;
 import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
+import com.wordpress.metaphorm.authProxy.OAuthProviderConfigurationException;
+import com.wordpress.metaphorm.authProxy.httpClient.AuthProxyConnection;
+import com.wordpress.metaphorm.authProxy.oauthClient.OAuthProviderConnection;
 import com.wordpress.metaphorm.authProxy.sb.NoSuchOAuthProviderException;
 import com.wordpress.metaphorm.authProxy.sb.service.OAuthProviderLocalServiceUtil;
 import com.wordpress.metaphorm.authProxy.state.ExpiredStateException;
 import com.wordpress.metaphorm.authProxy.state.OAuthState;
 
+import java.io.IOException;
 import java.net.HttpURLConnection;
+import java.net.MalformedURLException;
 
 import oauth.signpost.OAuthConsumer;
 import oauth.signpost.OAuthProvider;
@@ -44,7 +49,7 @@ import org.apache.commons.httpclient.HttpMethod;
 /**
  * @author Stian Sigvartsen
  */
-public class OAuthProviderConnection {
+public class OAuthProviderConnectionSignpostImpl implements OAuthProviderConnection {
 
 	boolean connected;
 	String realm;
@@ -52,17 +57,17 @@ public class OAuthProviderConnection {
 	OAuthProvider oAuthProvider;
 	com.wordpress.metaphorm.authProxy.sb.model.OAuthProvider sbOAuthProvider;
 	
-	public OAuthProviderConnection(com.wordpress.metaphorm.authProxy.sb.model.OAuthProvider provider, OAuthState oAuthState) {
+	public OAuthProviderConnectionSignpostImpl(com.wordpress.metaphorm.authProxy.sb.model.OAuthProvider provider, OAuthState oAuthState) {
 		
 		this.sbOAuthProvider = provider;
 		this.oAuthState = oAuthState;
 		
-		_log.debug("Constructing for realm \"" + provider.getRealm() + "\"");
+		_log.debug("Constructing with provider for realm \"" + provider.getRealm() + "\"");
 	}
 	
-	public OAuthProviderConnection(String realm, OAuthState oAuthState) {
+	public OAuthProviderConnectionSignpostImpl(String realm, OAuthState oAuthState) {
 		
-		_log.debug("Constructing for realm \"" + realm + "\"");
+		_log.debug("Constructing without provider for realm \"" + realm + "\"");
 		
 		connected = false;
 		this.realm = realm;
@@ -101,10 +106,14 @@ public class OAuthProviderConnection {
 		return oAuthState.getOAuthConsumer(realm);
 	}
 	
-	private OAuthProvider getOAuthProvider() {
+	private OAuthProvider getSignpostOAuthProvider() {
 		return oAuthProvider;
 	}
 	
+	/* (non-Javadoc)
+	 * @see com.wordpress.metaphorm.authProxy.OAuthProviderConnection_int#connect()
+	 */
+	@Override
 	public void connect() throws OAuthProviderConfigurationException, NoSuchOAuthProviderException, OAuthMessageSignerException, SystemException, ExpiredStateException {
 		
 		
@@ -133,16 +142,10 @@ public class OAuthProviderConnection {
 	}	
 			
 	
-	/**
-	 * Returns the URL to redirect clients to for request token authorisation
-	 * 
-	 * @param oauth_callback
-	 * @return
-	 * @throws OAuthCommunicationException
-	 * @throws OAuthMessageSignerException
-	 * @throws OAuthNotAuthorizedException
-	 * @throws OAuthExpectationFailedException
+	/* (non-Javadoc)
+	 * @see com.wordpress.metaphorm.authProxy.OAuthProviderConnection_int#retrieveRequestToken(java.lang.String)
 	 */
+	@Override
 	public String retrieveRequestToken(String oauth_callback) 
 			throws OAuthCommunicationException, OAuthMessageSignerException, 
 			OAuthNotAuthorizedException, OAuthExpectationFailedException, ExpiredStateException {
@@ -175,27 +178,46 @@ public class OAuthProviderConnection {
 		return nextURL;
 	}
 	
+	/* (non-Javadoc)
+	 * @see com.wordpress.metaphorm.authProxy.OAuthProviderConnection_int#isAuthorised()
+	 */
+	@Override
 	public boolean isAuthorised() throws ExpiredStateException {
 		
 		_log.debug("isAuthorised()");
+
+		if (!connected) throw new RuntimeException("OAuth provider not connected");
 		
 		return oAuthState.getPhase(realm) >= OAuthState.RESOURCE_PHASE;
 	}
 	
+	/* (non-Javadoc)
+	 * @see com.wordpress.metaphorm.authProxy.OAuthProviderConnection_int#getToken()
+	 */
+	@Override
 	public String getToken() throws ExpiredStateException {	
+		
+		if (!connected) throw new RuntimeException("OAuth provider not connected");
+		
 		return oAuthState.getOAuthConsumer(realm).getToken();
 	}
 	
+	/* (non-Javadoc)
+	 * @see com.wordpress.metaphorm.authProxy.OAuthProviderConnection_int#retrieveAccessToken()
+	 */
+	@Override
 	public void retrieveAccessToken() 
 			throws 	OAuthCommunicationException, OAuthExpectationFailedException, 
 					OAuthNotAuthorizedException, OAuthMessageSignerException, ExpiredStateException {
+		
+		if (!connected) throw new RuntimeException("OAuth provider not connected");
 		
 		OAuthConsumer consumer = getOAuthConsumer();		
 		String verificationCode = oAuthState.getVerifier(realm);
 		
 		_log.debug("Retrieving access token for " + consumer.getToken() + ", " + consumer.getTokenSecret() + ", " + verificationCode);
 		
-		getOAuthProvider().retrieveAccessToken(consumer, verificationCode);
+		getSignpostOAuthProvider().retrieveAccessToken(consumer, verificationCode);
 		
 		_log.debug("Updating OAuthState...");
 		
@@ -210,11 +232,15 @@ public class OAuthProviderConnection {
 	public void sign(HttpURLConnection uRLConn) 
 			throws OAuthMessageSignerException, OAuthExpectationFailedException, OAuthCommunicationException, ExpiredStateException {
 		
+		if (!connected) throw new RuntimeException("OAuth provider not connected");
+		
 		getOAuthConsumer().sign(uRLConn);		
 	}
 	
 	public void sign(HttpMethod httpMethod) 
 			throws OAuthMessageSignerException, OAuthExpectationFailedException, OAuthCommunicationException, ExpiredStateException {
+		
+		if (!connected) throw new RuntimeException("OAuth provider not connected");
 		
 		_log.debug("Signing Apache Commons Client 3.x request");
 		
@@ -232,5 +258,16 @@ public class OAuthProviderConnection {
 		consumer.sign(httpMethod);
 	}
 	
-	private static Log _log = LogFactoryUtil.getLog(OAuthProviderConnection.class);
+	private static Log _log = LogFactoryUtil.getLog(OAuthProviderConnectionSignpostImpl.class);
+
+	@Override
+	public AuthProxyConnection getAuthProxyConnection() throws MalformedURLException, IOException {
+
+		return null;
+	}
+
+	@Override
+	public com.wordpress.metaphorm.authProxy.sb.model.OAuthProvider getOAuthProvider() {
+		return sbOAuthProvider;
+	}
 }

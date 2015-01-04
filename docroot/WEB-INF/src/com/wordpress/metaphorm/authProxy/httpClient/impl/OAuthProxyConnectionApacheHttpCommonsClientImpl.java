@@ -32,11 +32,8 @@ package com.wordpress.metaphorm.authProxy.httpClient.impl;
 
 import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
-import com.wordpress.metaphorm.authProxy.OAuthProviderConnection;
 import com.wordpress.metaphorm.authProxy.RedirectRequiredException;
 import com.wordpress.metaphorm.authProxy.httpClient.HttpConstants;
-import com.wordpress.metaphorm.authProxy.state.ExpiredStateException;
-import com.wordpress.metaphorm.authProxy.state.OAuthState;
 
 import java.io.File;
 import java.io.IOException;
@@ -53,10 +50,6 @@ import java.util.Map;
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
-
-import oauth.signpost.exception.OAuthCommunicationException;
-import oauth.signpost.exception.OAuthExpectationFailedException;
-import oauth.signpost.exception.OAuthMessageSignerException;
 
 import org.apache.commons.fileupload.FileItem;
 import org.apache.commons.fileupload.FileUploadException;
@@ -99,13 +92,19 @@ public class OAuthProxyConnectionApacheHttpCommonsClientImpl extends AbstractOAu
 	private HttpMethod httpMethod;
 	private Map<String, List<String>> responseHeaderMap;
 	
-	public OAuthProxyConnectionApacheHttpCommonsClientImpl(HttpServletRequest servletReq, OAuthState oAuthState) throws MalformedURLException, IOException {
+	public OAuthProxyConnectionApacheHttpCommonsClientImpl(HttpServletRequest servletReq) throws MalformedURLException, IOException {
 		
 		this.servletReq = servletReq;
 		
-		setOAuthState(oAuthState);
-		
 		prepareHttpMethod(servletReq);
+	}
+
+	public boolean isNegotiatingConnection() {
+		return true;
+	}
+	
+	public HttpMethod getHttpMethod() {
+		return httpMethod;
 	}
 
 	private void prepareHttpMethod(HttpServletRequest servletReq)
@@ -155,32 +154,9 @@ public class OAuthProxyConnectionApacheHttpCommonsClientImpl extends AbstractOAu
 		return new URL(servletReq.getRequestURL().toString());
 	}
 	
-	@Override
-	public URL getOAuthCallbackURL() throws MalformedURLException {
-		
-		String oauth_callback = servletReq.getHeader("oauth_callback");
-		if (oauth_callback == null) {
-			
-			// Use the requested URL as a callback URL (after OAuth authorisation)
-			// FYI: Upon returning, this filter will swap the request token for an access token before requesting the resource
-			oauth_callback = servletReq.getRequestURL() + (servletReq.getQueryString() != null ? "?" + servletReq.getQueryString() : "");
-		}
-		
-		return new URL(oauth_callback);
-	}
-	
 	public void sendRequest() throws IOException {
 		
 		executeProxyRequest(httpMethod);
-	}
-	
-	public String getAuthChallengeString() {
-		
-		Header header;
-		String authChallengeStr = ((header = httpMethod.getResponseHeader("Authorization")) != null ? header.getValue() : null);
-		if (authChallengeStr == null) authChallengeStr = ((header = httpMethod.getResponseHeader("WWW-Authenticate")) != null ? header.getValue() : null);
-
-		return authChallengeStr;
 	}
 	
 	public void reset() throws IOException {
@@ -188,12 +164,6 @@ public class OAuthProxyConnectionApacheHttpCommonsClientImpl extends AbstractOAu
 		prepareHttpMethod(this.servletReq);
 	}
 	
-	public void signRequest(OAuthProviderConnection oAuthConn) 
-			throws OAuthMessageSignerException, OAuthExpectationFailedException, OAuthCommunicationException, ExpiredStateException {
-		
-		oAuthConn.sign(this.httpMethod);
-	}
-
 	@Override
 	public InputStream getInputStream() throws IOException {
 

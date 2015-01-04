@@ -28,8 +28,9 @@ import com.wordpress.metaphorm.authProxy.OAuthProviderConfigurationException;
 import com.wordpress.metaphorm.authProxy.RedirectRequiredException;
 import com.wordpress.metaphorm.authProxy.Utils;
 import com.wordpress.metaphorm.authProxy.httpClient.AuthProxyConnection;
+import com.wordpress.metaphorm.authProxy.httpClient.AuthProxyConnectionFactory;
 import com.wordpress.metaphorm.authProxy.httpClient.HttpConstants;
-import com.wordpress.metaphorm.authProxy.httpClient.impl.OAuthProxyConnectionApacheHttpCommonsClientImpl;
+import com.wordpress.metaphorm.authProxy.httpClient.impl.OAuthProxyConnectionImpl;
 import com.wordpress.metaphorm.authProxy.sb.NoSuchOAuthProviderException;
 import com.wordpress.metaphorm.authProxy.state.ExpiredStateException;
 import com.wordpress.metaphorm.authProxy.state.OAuthState;
@@ -153,7 +154,10 @@ public class AuthProxyServletFilter implements Filter {
 		_log.debug("doFilter()");
 		
 		//if (servletReq.getQueryString() != null && servletReq.getQueryString().indexOf("p_p_resource_id") == -1)
-			//Utils.traceRequest(servletReq);
+		if (servletReq.getQueryString() == null || 
+				(servletReq.getQueryString() != null && (servletReq.getQueryString().indexOf("p_p_resource_id") == -1)))
+			
+			Utils.traceRequest(servletReq);
 		
 		// Prevent infinte loops by detecting when request has come from this filter
 		if (servletReq.getHeader("User-Agent") != null && servletReq.getHeader("User-Agent").equals(PROXY_USER_AGENT)) {
@@ -300,7 +304,9 @@ public class AuthProxyServletFilter implements Filter {
 		// Get the oAuthState linked to the userToken (by header) or HTTP session ID
 		OAuthState oAuthState = getOAuthState(servletReq, servletResp);
 				
-		AuthProxyConnection uRLConn = new OAuthProxyConnectionApacheHttpCommonsClientImpl(servletReq, oAuthState);
+		AuthProxyConnection uRLConn = 
+				new OAuthProxyConnectionImpl(servletReq, AuthProxyConnectionFactory.getFactory(servletReq, oAuthState));
+				//AuthProxyConnectionFactory.getFactory(servletReq, oAuthState).getAuthProxyConnection();
 
 		try {
 						

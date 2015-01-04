@@ -23,7 +23,8 @@ import com.liferay.portal.kernel.exception.SystemException;
 import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
 import com.wordpress.metaphorm.authProxy.OAuthProviderConfigurationException;
-import com.wordpress.metaphorm.authProxy.OAuthProviderConnection;
+import com.wordpress.metaphorm.authProxy.oauthClient.OAuthProviderConnection;
+import com.wordpress.metaphorm.authProxy.oauthClient.impl.OAuthProviderConnectionSignpostImpl;
 import com.wordpress.metaphorm.authProxy.sb.NoSuchOAuthProviderException;
 
 import java.util.HashMap;
@@ -121,7 +122,10 @@ public class OAuthStateManager {
 											
 						// Use a inline class here instead to prevent the need to store the verifier to database record
 						
-						OAuthProviderConnection oAuthConn = new OAuthProviderConnection(realm, new OAuthStateWrapper(state) {
+						OAuthProviderConnection oAuthConn = new OAuthProviderConnectionSignpostImpl(realm, new OAuthStateWrapper(state) {
+
+							private static final long serialVersionUID = 1L;
+
 							@Override
 							public String getVerifier(String oAuthRealm)
 									throws ExpiredStateException {

@@ -32,6 +32,7 @@ import java.util.Map;
  */
 public interface AuthProxyConnection {
 
+	public void sendRequest() throws IOException;
 	public void connect() throws RedirectRequiredException, OAuthProviderConfigurationException, IOException;
 	public InputStream getInputStream() throws IOException;
 	public int getResponseCode() throws IOException;

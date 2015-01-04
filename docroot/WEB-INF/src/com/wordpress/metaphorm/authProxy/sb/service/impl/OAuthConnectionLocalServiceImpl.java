@@ -19,10 +19,8 @@ import com.liferay.portal.kernel.exception.SystemException;
 import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
 import com.liferay.portal.service.ServiceContext;
-import com.wordpress.metaphorm.authProxy.httpClient.impl.AbstractOAuthProxyConnectionImpl;
 import com.wordpress.metaphorm.authProxy.sb.NoSuchOAuthConnectionException;
 import com.wordpress.metaphorm.authProxy.sb.model.OAuthConnection;
-import com.wordpress.metaphorm.authProxy.sb.service.OAuthConnectionLocalServiceUtil;
 import com.wordpress.metaphorm.authProxy.sb.service.base.OAuthConnectionLocalServiceBaseImpl;
 import com.wordpress.metaphorm.authProxy.state.OAuthState;
 
