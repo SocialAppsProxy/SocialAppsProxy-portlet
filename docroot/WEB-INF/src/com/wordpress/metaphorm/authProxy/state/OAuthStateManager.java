@@ -33,7 +33,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import oauth.signpost.OAuthConsumer;
 import oauth.signpost.exception.OAuthCommunicationException;
 import oauth.signpost.exception.OAuthExpectationFailedException;
 import oauth.signpost.exception.OAuthMessageSignerException;
@@ -114,11 +113,11 @@ public class OAuthStateManager {
 					continue;
 				}
 				
-				OAuthConsumer consumer = state.getOAuthConsumer(realm);
+				OAuthCredentials oAuthCredentials = state.getOAuthCredentials(realm);
 				
-				if (consumer != null) {
-					if (consumer.getToken() != null && consumer.getToken().equals(requestToken)) {
-						_log.debug("Associated verifier \"" + verifier + "\" with token \"" + consumer.getToken() + "\" of realm \"" + realm + "\" of OAuthState \"" + stateId + "\"");					
+				if (oAuthCredentials != null) {
+					if (oAuthCredentials.getToken() != null && oAuthCredentials.getToken().equals(requestToken)) {
+						_log.debug("Associated verifier \"" + verifier + "\" with token \"" + oAuthCredentials.getToken() + "\" of realm \"" + realm + "\" of OAuthState \"" + stateId + "\"");					
 											
 						// Use a inline class here instead to prevent the need to store the verifier to database record
 						
@@ -140,7 +139,7 @@ public class OAuthStateManager {
 						
 					} else {
 						
-						_log.debug("Ignoring consumer token \"" + consumer.getToken() + "\" of OAuthState \"" + stateId + "\"");	
+						_log.debug("Ignoring consumer token \"" + oAuthCredentials.getToken() + "\" of OAuthState \"" + stateId + "\"");	
 					}
 				} else {
 					_log.debug("OAuthState " + stateId + " with null consumer for realm " + realm + " encountered. Ignoring.");
@@ -182,12 +181,12 @@ public class OAuthStateManager {
 			return oAuthStateId;
 		}
 
-		public void setConsumer(String oAuthRealm, OAuthConsumer consumer) throws ExpiredStateException {
-			oAuthState.setConsumer(oAuthRealm, consumer);
+		public void setOAuthCredentials(String oAuthRealm, OAuthCredentials oAuthCredentials) throws ExpiredStateException {
+			oAuthState.setOAuthCredentials(oAuthRealm, oAuthCredentials);
 		}
 
-		public OAuthConsumer getOAuthConsumer(String oAuthRealm) throws ExpiredStateException {
-			return oAuthState.getOAuthConsumer(oAuthRealm);
+		public OAuthCredentials getOAuthCredentials(String oAuthRealm) throws ExpiredStateException {
+			return oAuthState.getOAuthCredentials(oAuthRealm);
 		}
 
 		public void setPAuth(String p_auth) throws ExpiredStateException {

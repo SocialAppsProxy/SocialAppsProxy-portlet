@@ -29,15 +29,13 @@ import com.wordpress.metaphorm.authProxy.sb.model.OAuthConnection;
 import com.wordpress.metaphorm.authProxy.sb.service.OAuthConnectionLocalServiceUtil;
 import com.wordpress.metaphorm.authProxy.sb.service.OAuthProviderLocalServiceUtil;
 import com.wordpress.metaphorm.authProxy.state.ExpiredStateException;
+import com.wordpress.metaphorm.authProxy.state.OAuthCredentials;
 import com.wordpress.metaphorm.authProxy.state.OAuthState;
 
 import java.util.HashMap;
 import java.util.Map;
 
 import javax.servlet.http.HttpSession;
-
-import oauth.signpost.OAuthConsumer;
-import oauth.signpost.basic.DefaultOAuthConsumer;
 
 /**
  * @author Stian Sigvartsen
@@ -96,12 +94,12 @@ public class PortalAuthedSessionOAuthStateImpl extends HttpSessionOAuthStateImpl
 	}
 	
 	@Override
-	public void setConsumer(String oAuthRealm, OAuthConsumer consumer) throws ExpiredStateException {
+	public void setOAuthCredentials(String oAuthRealm, OAuthCredentials oAuthCredentials) throws ExpiredStateException {
 		
 		_log.debug("setConsumer(\"" + oAuthRealm + "\", " + "OAuthConsumer object" + ")");
 		
-		dirtyToken.put(oAuthRealm, consumer.getToken());			
-		dirtyTokenSecret.put(oAuthRealm, consumer.getTokenSecret());	
+		dirtyToken.put(oAuthRealm, oAuthCredentials.getToken());			
+		dirtyTokenSecret.put(oAuthRealm, oAuthCredentials.getTokenSecret());	
 		
 		_log.debug("setConsumer() completed successfully");
 	}
@@ -122,7 +120,7 @@ public class PortalAuthedSessionOAuthStateImpl extends HttpSessionOAuthStateImpl
 	}
 
 	@Override
-	public OAuthConsumer getOAuthConsumer(String oAuthRealm) throws ExpiredStateException {
+	public OAuthCredentials getOAuthCredentials(String oAuthRealm) throws ExpiredStateException {
 		
 		
 		try {
@@ -130,12 +128,14 @@ public class PortalAuthedSessionOAuthStateImpl extends HttpSessionOAuthStateImpl
 			com.wordpress.metaphorm.authProxy.sb.model.OAuthProvider provider = OAuthProviderLocalServiceUtil.getProviderForRealm(oAuthRealm);
 			OAuthConnection conn = getOAuthConnection(oAuthRealm);			
 
-			OAuthConsumer consumer = new DefaultOAuthConsumer(provider.getConsumerKey(), provider.getConsumerSecret());						
+			OAuthCredentials oAuthCredentials = new OAuthCredentials(provider.getConsumerKey(), provider.getConsumerSecret());						
 			
-			if (conn.getToken() != null && conn.getToken().length() > 0)
-				consumer.setTokenWithSecret(conn.getToken(), conn.getTokenSecret());
+			if (conn.getToken() != null && conn.getToken().length() > 0) {
+				oAuthCredentials.setToken(conn.getToken());
+				oAuthCredentials.setTokenSecret(conn.getTokenSecret());
+			}
 			
-			return consumer; 
+			return oAuthCredentials; 
 			
 		} catch (NoSuchOAuthProviderException e) {
 			

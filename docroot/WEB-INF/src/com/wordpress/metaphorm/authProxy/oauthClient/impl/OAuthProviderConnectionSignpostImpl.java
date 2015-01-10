@@ -28,6 +28,7 @@ import com.wordpress.metaphorm.authProxy.oauthClient.OAuthProviderConnection;
 import com.wordpress.metaphorm.authProxy.sb.NoSuchOAuthProviderException;
 import com.wordpress.metaphorm.authProxy.sb.service.OAuthProviderLocalServiceUtil;
 import com.wordpress.metaphorm.authProxy.state.ExpiredStateException;
+import com.wordpress.metaphorm.authProxy.state.OAuthCredentials;
 import com.wordpress.metaphorm.authProxy.state.OAuthState;
 
 import java.io.IOException;
@@ -54,7 +55,7 @@ public class OAuthProviderConnectionSignpostImpl implements OAuthProviderConnect
 	boolean connected;
 	String realm;
 	OAuthState oAuthState;
-	OAuthProvider oAuthProvider;
+	DefaultOAuthProvider oAuthProvider;
 	com.wordpress.metaphorm.authProxy.sb.model.OAuthProvider sbOAuthProvider;
 	
 	public OAuthProviderConnectionSignpostImpl(com.wordpress.metaphorm.authProxy.sb.model.OAuthProvider provider, OAuthState oAuthState) {
@@ -76,10 +77,10 @@ public class OAuthProviderConnectionSignpostImpl implements OAuthProviderConnect
 	
 	private void initialiseState() throws ExpiredStateException {
 		
-		if (oAuthState.getOAuthConsumer(realm) == null) {
+		if (oAuthState.getOAuthCredentials(realm) == null) {
 			
 			_log.debug("No OAuth state found. Initialising...");
-			oAuthState.setConsumer(realm, new DefaultOAuthConsumer(
+			oAuthState.setOAuthCredentials(realm, new OAuthCredentials(
 					sbOAuthProvider.getConsumerKey(), sbOAuthProvider.getConsumerSecret()));
 			
 			//oAuthState.setConsumer(realm, new CommonsHttp3OAuthConsumer(
@@ -102,8 +103,18 @@ public class OAuthProviderConnectionSignpostImpl implements OAuthProviderConnect
 		oAuthProvider.setOAuth10a(true);
 	}
 	
-	private OAuthConsumer getOAuthConsumer() throws ExpiredStateException  {		
-		return oAuthState.getOAuthConsumer(realm);
+	private OAuthCredentials getOAuthCredentials() throws ExpiredStateException  {		
+		return oAuthState.getOAuthCredentials(realm);
+	}
+	
+	private OAuthConsumer getOAuthConsumer(OAuthCredentials oAuthCredentials) {
+		
+		DefaultOAuthConsumer oAuthConsumer = new DefaultOAuthConsumer(
+				sbOAuthProvider.getConsumerKey(), sbOAuthProvider.getConsumerSecret());
+		
+		oAuthConsumer.setTokenWithSecret(oAuthCredentials.getToken(), oAuthCredentials.getTokenSecret());
+		
+		return oAuthConsumer;
 	}
 	
 	private OAuthProvider getSignpostOAuthProvider() {
@@ -151,30 +162,28 @@ public class OAuthProviderConnectionSignpostImpl implements OAuthProviderConnect
 			OAuthNotAuthorizedException, OAuthExpectationFailedException, ExpiredStateException {
 				
 		if (!connected) throw new RuntimeException("OAuth provider not connected");
-		OAuthConsumer consumer = oAuthState.getOAuthConsumer(realm);
+		OAuthCredentials oAuthCredentials = oAuthState.getOAuthCredentials(realm);
 		
-		if (consumer == null) initialiseState();
-		
-		/*
-		if (consumer == null) {
-			
-			consumer = new DefaultOAuthConsumer(
-			        "4F7vZdbqEWobRamleVnA",
-			        "aFG3cbbiu65IZwWudXZ5DllQjSD0jX3ZSVtxyHTBWo");	
-		}
-		*/
-		
-		_log.debug("consumer.getConsumerKey() = " + consumer.getConsumerKey());
-		_log.debug("consumer.getConsumerSecret() = " + consumer.getConsumerSecret());
-		_log.debug("consumer.getToken() = " + consumer.getToken());
-		_log.debug("consumer.getTokenSecret() = " + consumer.getTokenSecret());
+		if (oAuthCredentials == null) initialiseState();
 		
 		_log.debug("**** Retrieving request token with oauth_callback = " + oauth_callback);
 		
-		String nextURL = oAuthProvider.retrieveRequestToken(consumer, oauth_callback);	
+		OAuthConsumer oAuthConsumer = getOAuthConsumer(oAuthCredentials);
+		
+		String nextURL = oAuthProvider.retrieveRequestToken(oAuthConsumer, oauth_callback);
+		
 		oAuthState.setPhase(realm, OAuthState.AUTHORISE_PHASE);
-		oAuthState.setConsumer(realm, consumer);
+		
+		oAuthCredentials.setToken(oAuthConsumer.getToken());
+		oAuthCredentials.setTokenSecret(oAuthConsumer.getTokenSecret());
+		oAuthState.setOAuthCredentials(realm, oAuthCredentials);
+		
+		_log.debug("Received request token / request token secret: " + oAuthCredentials.getToken() + ", "+ oAuthCredentials.getTokenSecret());
+
+		_log.debug("Updating OAuthState...");
 		oAuthState.commitChanges(realm);
+		_log.debug("OAuthState state changes committed.");
+		
 		return nextURL;
 	}
 	
@@ -199,7 +208,7 @@ public class OAuthProviderConnectionSignpostImpl implements OAuthProviderConnect
 		
 		if (!connected) throw new RuntimeException("OAuth provider not connected");
 		
-		return oAuthState.getOAuthConsumer(realm).getToken();
+		return oAuthState.getOAuthCredentials(realm).getToken();
 	}
 	
 	/* (non-Javadoc)
@@ -212,21 +221,27 @@ public class OAuthProviderConnectionSignpostImpl implements OAuthProviderConnect
 		
 		if (!connected) throw new RuntimeException("OAuth provider not connected");
 		
-		OAuthConsumer consumer = getOAuthConsumer();		
+		OAuthCredentials oAuthCredentials = getOAuthCredentials();
 		String verificationCode = oAuthState.getVerifier(realm);
 		
-		_log.debug("Retrieving access token for " + consumer.getToken() + ", " + consumer.getTokenSecret() + ", " + verificationCode);
+		_log.debug("**** Retrieving access token for " + oAuthCredentials.getToken() + ", " + oAuthCredentials.getTokenSecret() + ", " + verificationCode);
 		
-		getSignpostOAuthProvider().retrieveAccessToken(consumer, verificationCode);
+		OAuthConsumer oAuthConsumer = getOAuthConsumer(oAuthCredentials);
 		
-		_log.debug("Updating OAuthState...");
+		getSignpostOAuthProvider().retrieveAccessToken(oAuthConsumer, verificationCode);
 		
 		oAuthState.setVerifier(realm, null);
 		oAuthState.setPhase(realm, OAuthState.RESOURCE_PHASE);
-		oAuthState.setConsumer(realm, consumer);
-		oAuthState.commitChanges(realm);
+
+		oAuthCredentials.setToken(oAuthConsumer.getToken());
+		oAuthCredentials.setTokenSecret(oAuthConsumer.getTokenSecret());
+		oAuthState.setOAuthCredentials(realm, oAuthCredentials);
 		
-		_log.debug("OAuthState state changes committed...");
+		_log.debug("Received access token / access token secret: " + oAuthCredentials.getToken() + ", "+ oAuthCredentials.getTokenSecret());
+		
+		_log.debug("Updating OAuthState...");
+		oAuthState.commitChanges(realm);
+		_log.debug("OAuthState state changes committed.");
 	}
 	
 	public void sign(HttpURLConnection uRLConn) 
@@ -234,7 +249,8 @@ public class OAuthProviderConnectionSignpostImpl implements OAuthProviderConnect
 		
 		if (!connected) throw new RuntimeException("OAuth provider not connected");
 		
-		getOAuthConsumer().sign(uRLConn);		
+		OAuthCredentials oAuthCredentials = getOAuthCredentials();
+		getOAuthConsumer(oAuthCredentials).sign(uRLConn);		
 	}
 	
 	public void sign(HttpMethod httpMethod) 
@@ -244,7 +260,8 @@ public class OAuthProviderConnectionSignpostImpl implements OAuthProviderConnect
 		
 		_log.debug("Signing Apache Commons Client 3.x request");
 		
-		OAuthConsumer defaultConsumer = getOAuthConsumer();
+		OAuthCredentials oAuthCredentials = getOAuthCredentials();
+		OAuthConsumer defaultConsumer = getOAuthConsumer(oAuthCredentials);
 		
 		CommonsHttp3OAuthConsumer consumer = new CommonsHttp3OAuthConsumer(
 				defaultConsumer.getConsumerKey(),
@@ -254,6 +271,13 @@ public class OAuthProviderConnectionSignpostImpl implements OAuthProviderConnect
 		consumer.setTokenWithSecret(
 				defaultConsumer.getToken(), 
 				defaultConsumer.getTokenSecret());
+		
+		_log.debug("**** SIGNING INPUT START ****");
+		_log.debug("consumer.getConsumerKey() = " + consumer.getConsumerKey());
+		_log.debug("consumer.getConsumerSecret() = " + consumer.getConsumerSecret());
+		_log.debug("consumer.getToken() = " + consumer.getToken());
+		_log.debug("consumer.getTokenSecret() = " + consumer.getTokenSecret());
+		_log.debug("**** SIGNING INPUT END ****");
 		
 		consumer.sign(httpMethod);
 	}

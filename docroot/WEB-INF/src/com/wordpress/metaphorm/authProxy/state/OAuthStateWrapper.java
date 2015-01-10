@@ -21,8 +21,6 @@ package com.wordpress.metaphorm.authProxy.state;
 
 import java.util.List;
 
-import oauth.signpost.OAuthConsumer;
-
 /**
  * @author Stian Sigvartsen
  */
@@ -36,14 +34,14 @@ public class OAuthStateWrapper implements OAuthState {
 		this.wrappedState = oAuthState;
 	}
 	
-	public void setConsumer(String oAuthRealm, OAuthConsumer consumer)
+	public void setOAuthCredentials(String oAuthRealm, OAuthCredentials oAuthCredentials)
 			throws ExpiredStateException {
-		this.wrappedState.setConsumer(oAuthRealm, consumer);
+		this.wrappedState.setOAuthCredentials(oAuthRealm, oAuthCredentials);
 	}
 
-	public OAuthConsumer getOAuthConsumer(String oAuthRealm)
+	public OAuthCredentials getOAuthCredentials(String oAuthRealm)
 			throws ExpiredStateException {
-		return this.wrappedState.getOAuthConsumer(oAuthRealm);
+		return this.wrappedState.getOAuthCredentials(oAuthRealm);
 	}
 
 	public void setPAuth(String p_auth) throws ExpiredStateException {

@@ -187,7 +187,7 @@ public class OAuthProxyConnectionImpl implements AuthProxyConnection { //extends
 					
 					String authChallengeStr = getAuthChallengeString(this.connection);
 					
-					_log.debug("AuthProxyHttpURLConnection :: Authorizaton/WWW-Authenticate header value: " + authChallengeStr);
+					_log.debug("AuthProxyHttpURLConnection :: Authorization/WWW-Authenticate header value: " + authChallengeStr);
 					
 					// This optional header should look like this
 					// "WWW-Authenticate: OAuth realm="http://sp.example.com/"
@@ -261,8 +261,8 @@ public class OAuthProxyConnectionImpl implements AuthProxyConnection { //extends
 			
 			this.connection = oAuthConn.getAuthProxyConnection();
 			
-			this.connection.sendRequest();
-	
+			oAuthConn.connect();
+			
 			
 			if (!oAuthConn.isAuthorised()) {
 			
@@ -285,10 +285,10 @@ public class OAuthProxyConnectionImpl implements AuthProxyConnection { //extends
 				
 				_log.debug("AuthProxyHttpURLConnection :: Requesting " + url);
 								
-				oAuthConn.getAuthProxyConnection().sendRequest();
+				this.connection.sendRequest();
 		        
 		        // Check if the access token has been revoked on the service provider side
-		        if (getResponseCode() == 401) {
+		        if (this.connection.getResponseCode() == 401) {
 		        	
 					URL oauth_callback = constructCallbackURL(oAuthRealm);				
 					_log.debug("AuthProxyHttpURLConnection :: Set oauth_callback = \"" + oauth_callback + "\"");
@@ -309,6 +309,12 @@ public class OAuthProxyConnectionImpl implements AuthProxyConnection { //extends
 			throw new IOException(e);
 		} catch (OAuthNotAuthorizedException e) {
 			throw new IOException(e);
+		} catch (NoSuchOAuthProviderException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		} catch (SystemException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
 		}
 	}
 
