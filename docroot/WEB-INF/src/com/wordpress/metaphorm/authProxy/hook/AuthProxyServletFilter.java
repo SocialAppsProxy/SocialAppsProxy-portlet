@@ -25,6 +25,7 @@ import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
 import com.liferay.portal.service.ServiceContext;
 import com.wordpress.metaphorm.authProxy.OAuthProviderConfigurationException;
+import com.wordpress.metaphorm.authProxy.ProtocolNotSupportedException;
 import com.wordpress.metaphorm.authProxy.RedirectRequiredException;
 import com.wordpress.metaphorm.authProxy.Utils;
 import com.wordpress.metaphorm.authProxy.httpClient.AuthProxyConnection;
@@ -149,7 +150,7 @@ public class AuthProxyServletFilter implements Filter {
 	private boolean filterHttpRequest(HttpServletRequest servletReq, HttpServletResponse servletResp)
 			throws IOException, ServletException,
 					OAuthCommunicationException, OAuthExpectationFailedException, 
-					OAuthNotAuthorizedException, OAuthMessageSignerException, ExpiredStateException, NoSuchOAuthProviderException, SystemException, OAuthProviderConfigurationException {
+					OAuthNotAuthorizedException, OAuthMessageSignerException, ExpiredStateException, NoSuchOAuthProviderException, SystemException, OAuthProviderConfigurationException, ProtocolNotSupportedException {
 		
 		_log.debug("doFilter()");
 		
@@ -164,13 +165,25 @@ public class AuthProxyServletFilter implements Filter {
 			_log.debug("Leaving request unchanged because it came from the proxy filter (prevent infinite loop).");
 			return false;
 		}
-		
-		if (servletReq.getParameter("oauth_realm") != null
-				&& servletReq.getParameter("oauth_token") != null 
-				&& servletReq.getParameter("oauth_verifier") != null) {
+
+
+		try {
 			
-			return handleOAuthCallback(servletReq, servletResp);
+			OAuthState oAuthState = OAuthStateManager.getRelatedOAuthState(servletReq.getParameter("oauth_realm"), servletReq.getParameter("oauth_token"));
+			
+			if (oAuthState != null)
+				AuthProxyConnectionFactory.getFactory(servletReq, oAuthState).delegateCallback(servletReq, servletResp);
+			
+		} catch (RedirectRequiredException e) {
+		
+			_log.debug("Issueing redirect response to: " + e.getURL().toString());
+			
+			servletResp.sendRedirect(e.getURL().toString());
+			return true;
 		}
+		
+		// If no redirect is necessary, then code execution continues
+
 		
 		// Allow requests for standard Liferay resources to pass through
 		if (Utils.isLiferayLocalResource(servletReq)) {
@@ -193,32 +206,6 @@ public class AuthProxyServletFilter implements Filter {
 		return serveRequest(servletReq, servletResp);		
 	}
 
-	private boolean handleOAuthCallback(HttpServletRequest servletReq,
-			HttpServletResponse servletResp) throws ExpiredStateException,
-			OAuthCommunicationException, OAuthExpectationFailedException,
-			OAuthNotAuthorizedException, OAuthMessageSignerException,
-			NoSuchOAuthProviderException, SystemException, IOException, OAuthProviderConfigurationException {
-		_log.debug("Received OAuth callback request ... ");
-		
-		OAuthStateManager.setReceivedVerifier(
-				servletReq.getParameter("oauth_realm"), 
-				servletReq.getParameter("oauth_token"), 
-				servletReq.getParameter("oauth_verifier"));
-		
-		_log.debug("Redirecting to strip oauth_token and oauth_verifier parameters out");
-		String queryString = servletReq.getQueryString();
-		
-		if (queryString != null) {
-			_log.debug("  Before: " + queryString);
-			queryString = queryString.replaceAll("&oauth_token(=[^&]*)?|^oauth_token(=[^&]*)?&?", "")
-					.replaceAll("&oauth_verifier(=[^&]*)?|^oauth_verifier(=[^&]*)?&?", "")
-					.replaceAll("&oauth_realm(=[^&]*)?|^oauth_realm(=[^&]*)?&?", "");
-			_log.debug("  After: " + queryString);				
-		}
-		
-		servletResp.sendRedirect(servletReq.getRequestURL() + (queryString != null && queryString.length() > 0 ? "?" + queryString : ""));
-		return true;
-	}
 
 	private boolean processLocalLiferayResourceRequest(HttpServletRequest servletReq,
 			HttpServletResponse servletResp)
@@ -297,7 +284,7 @@ public class AuthProxyServletFilter implements Filter {
 			HttpServletResponse servletResp)
 			throws OAuthMessageSignerException, OAuthNotAuthorizedException,
 			OAuthExpectationFailedException, OAuthCommunicationException,
-			IOException, MalformedURLException, UnsupportedEncodingException, ExpiredStateException, OAuthProviderConfigurationException {
+			IOException, MalformedURLException, UnsupportedEncodingException, ExpiredStateException, OAuthProviderConfigurationException, ProtocolNotSupportedException {
 		
 		_log.debug("Acting as forwarding proxy to " + servletReq.getServerName() + " !");
 		
@@ -496,6 +483,11 @@ public class AuthProxyServletFilter implements Filter {
 			} catch (SystemException e) {
 				throw new ServletException(e);			
 			} catch (OAuthProviderConfigurationException e) {
+				_log.warn(e.getMessage());
+				httpServletResp.sendError(501, e.getMessage());
+				return;
+			} catch (ProtocolNotSupportedException e) {
+				_log.warn(e.getMessage());
 				httpServletResp.sendError(501, e.getMessage());
 				return;
 			} catch (PortalException e) {

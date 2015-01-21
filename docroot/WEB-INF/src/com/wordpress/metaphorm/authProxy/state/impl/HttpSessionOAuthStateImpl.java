@@ -85,6 +85,10 @@ public class HttpSessionOAuthStateImpl extends AbstractOAuthStateImpl implements
 			// Probably because of AbstractOAuthConsumer not implementing Serializable
 			
 			return super.getOAuthCredentials(oAuthRealm);
+		
+		} catch (IllegalStateException e) {
+			
+			throw new ExpiredStateException();
 		}
 	}
 	
@@ -108,14 +112,40 @@ public class HttpSessionOAuthStateImpl extends AbstractOAuthStateImpl implements
 		return (String)httpSession.getAttribute("oAuthConsumer-" + oAuthRealm + "-verifier");
 	}
 
+	public long getSecondsUntilSessionExpiry() {
+		
+		_log.debug("httpSession.getLastAccessedTime() = " + httpSession.getLastAccessedTime());
+		_log.debug("httpSession.getCreationTime() = " + httpSession.getCreationTime());
+		_log.debug("Difference (millis) = " + (httpSession.getLastAccessedTime() - httpSession.getCreationTime()));
+		
+		return httpSession.getMaxInactiveInterval() - ((httpSession.getLastAccessedTime() - httpSession.getCreationTime())) / 1000;
+	}
+	
 	@Override
 	public boolean isExpired() {
 		
+		StringBuffer sb = new StringBuffer();
+		
+		sb.append("isExpired() invoked for " + this.getClass().getName() + ". This state is linked to HTTPSession " + httpSession.getId());
+		
 		try {
 			httpSession.getCreationTime();
+			
+			sb.append(" and is valid for another " 
+					+ getSecondsUntilSessionExpiry()
+					+ " seconds");
+			
 			return false;
+			
 		} catch (IllegalStateException ise) {
+			
+			sb.append(" which is expired");
+			
 			return true;
+		
+		} finally {
+			
+			_log.debug(sb.toString());
 		}
 	}
 	

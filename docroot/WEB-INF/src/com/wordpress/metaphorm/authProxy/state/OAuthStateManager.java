@@ -19,24 +19,14 @@ package com.wordpress.metaphorm.authProxy.state;
  * along with Social Apps Proxy.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-import com.liferay.portal.kernel.exception.SystemException;
 import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
-import com.wordpress.metaphorm.authProxy.OAuthProviderConfigurationException;
-import com.wordpress.metaphorm.authProxy.oauthClient.OAuthProviderConnection;
-import com.wordpress.metaphorm.authProxy.oauthClient.impl.OAuthProviderConnectionSignpostImpl;
-import com.wordpress.metaphorm.authProxy.sb.NoSuchOAuthProviderException;
 
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-
-import oauth.signpost.exception.OAuthCommunicationException;
-import oauth.signpost.exception.OAuthExpectationFailedException;
-import oauth.signpost.exception.OAuthMessageSignerException;
-import oauth.signpost.exception.OAuthNotAuthorizedException;
 
 /**
  * @author Stian Sigvartsen
@@ -59,6 +49,7 @@ public class OAuthStateManager {
 		DependencyListener dependencyListener = new DependencyListener() {
 			@Override
 			public void dependencyExpired() {
+				_log.debug("DependencyListener.dependencyExpired() invoked");
 				removeOAuthState(stateId);
 			}
 		};
@@ -83,12 +74,13 @@ public class OAuthStateManager {
 			
 			if (sessionMap.remove(stateId) != null)
 				_log.debug("Removed OAuthState " + stateId);
+			else
+				_log.debug("OAuthState already removed from OAuthStateManager");
 		}
 		
 	}
 	
-	public static void setReceivedVerifier(String realm, String requestToken, final String verifier) throws 
-			ExpiredStateException, OAuthCommunicationException, OAuthExpectationFailedException, OAuthNotAuthorizedException, OAuthMessageSignerException, NoSuchOAuthProviderException, SystemException, OAuthProviderConfigurationException {
+	public static OAuthState getRelatedOAuthState(String realm, String token) {
 		
 		Set<String> expiredIds = new HashSet<String>();
 		
@@ -98,54 +90,43 @@ public class OAuthStateManager {
 		StringBuffer debugMsg = new StringBuffer();
 		debugMsg.append("Checking for expired OAuthState objects amongst:");
 				for (String stateId : sessionMap.keySet()) {
-					debugMsg.append(" " + stateId);
+					debugMsg.append("\n " + stateId);
 				}
 		_log.debug(debugMsg.toString());
 		
-		synchronized (sessionMap) {
-			
+		OAuthState foundState = null;
+		
+		synchronized (sessionMap) {		
+		
 			for (String stateId : sessionMap.keySet()) {
 				
+				_log.debug("Checking state: " + stateId);
+				
 				OAuthState state = sessionMap.get(stateId);
-				
-				if (state.isExpired()) {
-					expiredIds.add(stateId);
-					continue;
-				}
-				
-				OAuthCredentials oAuthCredentials = state.getOAuthCredentials(realm);
-				
-				if (oAuthCredentials != null) {
-					if (oAuthCredentials.getToken() != null && oAuthCredentials.getToken().equals(requestToken)) {
-						_log.debug("Associated verifier \"" + verifier + "\" with token \"" + oAuthCredentials.getToken() + "\" of realm \"" + realm + "\" of OAuthState \"" + stateId + "\"");					
-											
-						// Use a inline class here instead to prevent the need to store the verifier to database record
+					
+				try {
+					
+					OAuthCredentials oAuthCredentials = state.getOAuthCredentials(realm);
+	
+					if (oAuthCredentials != null) {
 						
-						OAuthProviderConnection oAuthConn = new OAuthProviderConnectionSignpostImpl(realm, new OAuthStateWrapper(state) {
-
-							private static final long serialVersionUID = 1L;
-
-							@Override
-							public String getVerifier(String oAuthRealm)
-									throws ExpiredStateException {
-								
-								return verifier;
-							}
-						});
-						oAuthConn.connect();
-						oAuthConn.retrieveAccessToken();
+						if (oAuthCredentials.getToken() != null && oAuthCredentials.getToken().equals(token)) {
 						
-						break;
+							foundState = state;
+						}
 						
 					} else {
-						
-						_log.debug("Ignoring consumer token \"" + oAuthCredentials.getToken() + "\" of OAuthState \"" + stateId + "\"");	
+						_log.debug("OAuthState " + stateId + " with null consumer for realm " + realm + " encountered. Ignoring.");
 					}
-				} else {
-					_log.debug("OAuthState " + stateId + " with null consumer for realm " + realm + " encountered. Ignoring.");
-				}
+	
+				} catch (ExpiredStateException e) {
+					
+					_log.debug("OAuthState " + stateId + " is expired, adding to remove list");
+					expiredIds.add(stateId);
+					continue;
+				}			
 			}
-			
+		
 			_log.debug("Removing expired OAuthState objects...");
 			
 			int removeCount = 0;
@@ -160,8 +141,11 @@ public class OAuthStateManager {
 				removeCount++;
 			}
 			
-			_log.debug("Removed " + removeCount + " expired OAuthState objects");
+			_log.debug("Removed " + removeCount + " expired OAuthState objects");			
+			
 		}
+		
+		return foundState;
 	}
 	
 	public static class ManagedOAuthState implements OAuthState {

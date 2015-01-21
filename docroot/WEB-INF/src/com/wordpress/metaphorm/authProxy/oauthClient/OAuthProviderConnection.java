@@ -40,6 +40,8 @@ public interface OAuthProviderConnection {
 
 	public String getToken() throws ExpiredStateException;
 
+	public void setVerifier(String verifier) throws ExpiredStateException;
+	
 	public void retrieveAccessToken() throws OAuthCommunicationException,
 			OAuthExpectationFailedException, OAuthNotAuthorizedException,
 			OAuthMessageSignerException, ExpiredStateException;

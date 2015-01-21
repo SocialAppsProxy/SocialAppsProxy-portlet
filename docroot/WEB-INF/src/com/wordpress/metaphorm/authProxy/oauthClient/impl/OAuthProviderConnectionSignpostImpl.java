@@ -211,6 +211,15 @@ public class OAuthProviderConnectionSignpostImpl implements OAuthProviderConnect
 		return oAuthState.getOAuthCredentials(realm).getToken();
 	}
 	
+	@Override
+	public void setVerifier(String verifier) throws ExpiredStateException {
+		
+		if (!connected) throw new RuntimeException("OAuth provider not connected");
+		
+		this.oAuthState.setVerifier(realm, verifier);
+		this.oAuthState.commitChanges(realm);
+	}
+	
 	/* (non-Javadoc)
 	 * @see com.wordpress.metaphorm.authProxy.OAuthProviderConnection_int#retrieveAccessToken()
 	 */

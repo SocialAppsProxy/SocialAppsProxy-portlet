@@ -24,6 +24,7 @@ import com.liferay.portal.kernel.exception.SystemException;
 import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
 import com.wordpress.metaphorm.authProxy.OAuthProviderConfigurationException;
+import com.wordpress.metaphorm.authProxy.ProtocolNotSupportedException;
 import com.wordpress.metaphorm.authProxy.RedirectRequiredException;
 import com.wordpress.metaphorm.authProxy.httpClient.AuthProxyConnection;
 import com.wordpress.metaphorm.authProxy.httpClient.AuthProxyConnectionFactory;
@@ -147,25 +148,24 @@ public class OAuthProxyConnectionImpl implements AuthProxyConnection { //extends
 	
 	@Override
 	public void connect() throws RedirectRequiredException,
-			OAuthProviderConfigurationException, IOException {
+			OAuthProviderConfigurationException, ProtocolNotSupportedException, IOException {
 
 		try {
 			
-			OAuthProvider provider;
-			
+			OAuthProviderConnection preEmptiveOAuthConn;
+			OAuthProviderConnection oAuthConn;
 			String oAuthRealm;
-			OAuthProvider preEmptiveProvider = null;
-			OAuthProvider realmProvider;
 			
 			try {
-				preEmptiveProvider = OAuthProviderLocalServiceUtil.getMatchingOAuthProvider(getRequestedURL());	
-				oAuthRealm = preEmptiveProvider.getRealm();
+				
+				preEmptiveOAuthConn = connectionFactory.getProviderConnection(getRequestedURL());			
+				
+				oAuthRealm = preEmptiveOAuthConn.getOAuthProvider().getRealm();
 				_log.debug("AuthProxyHttpURLConnection :: Derived OAuth realm as \"" + oAuthRealm + "\"");
-				
-				// If a realm has not been manually set up, allow auto-discovery...
-				if (oAuthRealm != null && oAuthRealm.trim().length() == 0) oAuthRealm = null;
-				
+
 			} catch (NoSuchOAuthProviderException e) {
+				
+				preEmptiveOAuthConn = null;
 				oAuthRealm = null;
 			} catch (SystemException e) {
 				throw new IOException(e);
@@ -173,7 +173,7 @@ public class OAuthProxyConnectionImpl implements AuthProxyConnection { //extends
 			
 			
 			
-			// If pre-emptive authentication not configured for this URL then use discovery
+			// If pre-emptive authentication NOT configured for this URL then use discovery
 			if (oAuthRealm == null) {
 				
 				this.connection = connectionFactory.getAuthProxyConnection();
@@ -192,73 +192,33 @@ public class OAuthProxyConnectionImpl implements AuthProxyConnection { //extends
 					// This optional header should look like this
 					// "WWW-Authenticate: OAuth realm="http://sp.example.com/"
 					
-					oAuthRealm = extractOAuthRealm(authChallengeStr);
+					// The following line can throw a ProtocolNotSupportedException if the version of OAuth
+					// that the OAuthProvider entity has been configured with is not supported on the portal this app is deployed to.
+					// TODO: Consider if this should be a PortalException or SystemException instead
+					oAuthConn = connectionFactory.getProviderConnection(authChallengeStr);
+					
+					if (oAuthConn == null) {
 						
-					if (oAuthRealm == null) {
 						// A portal admin needs to set up preemptive authentication pattern for the URL
 						throw new OAuthProviderConfigurationException(
-								"An administrator needs to configure pre-emptive authentiation for the requested URL using the Liferay Portal control panel, because the OAuth provider doesn't describe the realm in its responses");
+								"An administrator needs to configure pre-emptive authentication for the requested URL using the Liferay Portal control panel, because the OAuth provider doesn't describe the realm in its responses");
 					}
 					
-					
-					// Attempt to resolve the realm into a provider configuration (more specific than URL pattern matched provider retrieval)
-					try {
-						realmProvider = OAuthProviderLocalServiceUtil.getProviderForRealm(oAuthRealm);
-					} catch (NoSuchOAuthProviderException e1) {
-						realmProvider = null;
-					} catch (SystemException e) {
-						throw new IOException(e);
-					}
-					
-					// If an OAuthProvider is not configured for this realm
-					if (realmProvider == null) {
-						try {
-							
-							// ... then create another OAuthProvider with the discovered realm
-							// By creating a new one this allows the existing one which has a pre-emptive URL pattern configured to continue to be
-							// used to proxy HTTP to HTTPS for non-OAuth resource as well
-							
-							_log.debug("AuthProxyHttpURLConnection :: Creating a new OAuthProvider with discovered oAuth realm...");
-							
-							long realmProviderId = CounterLocalServiceUtil.increment(OAuthProvider.class.getName());
-							realmProvider = OAuthProviderLocalServiceUtil.createOAuthProvider(realmProviderId);
-							realmProvider.setRealm(oAuthRealm);
-							
-							if (preEmptiveProvider != null) {	
-								realmProvider.setUseHTTPS(preEmptiveProvider.getUseHTTPS());
-							} else {
-								realmProvider.setUseHTTPS(false);
-							}
-							OAuthProviderLocalServiceUtil.updateOAuthProvider(realmProvider);
-														
-						} catch (SystemException e) {
-							// Ok to fail silently?
-							e.printStackTrace();
-							return;
-						}
-						
-						provider = realmProvider;
-					}
-															
+					oAuthRealm = oAuthConn.getOAuthProvider().getRealm();
+												
 				} else {
 					
 					// Either an unprotected resource 
 					// or a portal admin needs to set up preemptive authentication pattern for the URL
 					
-					_log.debug("AuthProxyHttpURLConnection :: Received response other than HTTP 401");
+					_log.debug("Received response other than HTTP 401");
 					
 					return;
 				}
 				
-			} else 
-				realmProvider = preEmptiveProvider;
+			} else
+				oAuthConn = preEmptiveOAuthConn;
 
-			_log.debug("Getting OAuthProviderConnection with compatible AuthProviderConnection for realm: " + realmProvider.getRealm());
-			
-			OAuthProviderConnection oAuthConn = 
-					this.connectionFactory.getOAuth10AProviderConnection(realmProvider); 
-					//new OAuthProviderConnection(realmProvider, oAuthState);
-			
 			this.connection = oAuthConn.getAuthProxyConnection();
 			
 			oAuthConn.connect();
@@ -266,10 +226,10 @@ public class OAuthProxyConnectionImpl implements AuthProxyConnection { //extends
 			
 			if (!oAuthConn.isAuthorised()) {
 			
-				_log.debug("AuthProxyHttpURLConnection :: No token available yet.");			
+				_log.debug("No token available yet.");			
 				
 				URL oauth_callback = constructCallbackURL(oAuthRealm);			
-				_log.debug("AuthProxyHttpURLConnection :: Set oauth_callback = \"" + oauth_callback + "\"");
+				_log.debug("Set oauth_callback = \"" + oauth_callback + "\"");
 				
 				String authoriseURL = oAuthConn.retrieveRequestToken(oauth_callback.toString());
 								
@@ -277,13 +237,13 @@ public class OAuthProxyConnectionImpl implements AuthProxyConnection { //extends
 						
 			} else { // Access token is available for OAuth provider
 				
-				_log.debug("AuthProxyHttpURLConnection :: Token is available: " + oAuthConn.getToken());
+				_log.debug("Token is available: " + oAuthConn.getToken());
 				
 				URL urlObj = getRequestedURL();
 				
 				String url = urlObj.toString();
 				
-				_log.debug("AuthProxyHttpURLConnection :: Requesting " + url);
+				_log.debug("Requesting " + url);
 								
 				this.connection.sendRequest();
 		        

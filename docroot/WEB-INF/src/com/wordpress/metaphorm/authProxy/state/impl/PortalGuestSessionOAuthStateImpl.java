@@ -48,26 +48,6 @@ public class PortalGuestSessionOAuthStateImpl extends HttpSessionOAuthStateImpl 
 		httpSession.setAttribute("oAuthConsumer-" + oAuthRealm, oAuthCredentials);
 	}
 
-	@Override
-	public OAuthCredentials getOAuthCredentials(String oAuthRealm) throws ExpiredStateException {
-		
-		try {
-			
-			OAuthCredentials oAuthCredentials = (OAuthCredentials)httpSession.getAttribute("oAuthConsumer-" + oAuthRealm);
-			
-			if (oAuthCredentials == null) 
-				return super.getOAuthCredentials(oAuthRealm);
-			
-			return oAuthCredentials;
-		
-		} catch (ClassCastException e) { 
-			
-			// This occurs upon interaction with a HttpSession from a previous app deployment.
-			// Probably because of AbstractOAuthConsumer not implementing Serializable
-			
-			return super.getOAuthCredentials(oAuthRealm);
-		}
-	}
 	
 	@Override
 	public void setPAuth(String p_auth) throws ExpiredStateException {
@@ -87,17 +67,6 @@ public class PortalGuestSessionOAuthStateImpl extends HttpSessionOAuthStateImpl 
 	@Override
 	public String getVerifier(String oAuthRealm) throws ExpiredStateException {
 		return (String)httpSession.getAttribute("oAuthConsumer-" + oAuthRealm + "-verifier");
-	}
-
-	@Override
-	public boolean isExpired() {
-		
-		try {
-			httpSession.getCreationTime();
-			return false;
-		} catch (IllegalStateException ise) {
-			return true;
-		}
 	}
 
 	@Override

@@ -1,4 +1,4 @@
-package com.wordpress.metaphorm.authProxy.httpClient;
+package com.wordpress.metaphorm.authProxy;
 
 /**
  * Copyright (c) 2014-present Stian Sigvartsen. All rights reserved.
@@ -19,24 +19,14 @@ package com.wordpress.metaphorm.authProxy.httpClient;
  * along with Social Apps Proxy.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-import com.wordpress.metaphorm.authProxy.OAuthProviderConfigurationException;
-import com.wordpress.metaphorm.authProxy.ProtocolNotSupportedException;
-import com.wordpress.metaphorm.authProxy.RedirectRequiredException;
-
-import java.io.IOException;
-import java.io.InputStream;
-import java.util.List;
-import java.util.Map;
-
 /**
  * @author Stian Sigvartsen
  */
-public interface AuthProxyConnection {
+public class ProtocolNotSupportedException extends Exception {
 
-	public void sendRequest() throws IOException;
-	public void connect() throws RedirectRequiredException, OAuthProviderConfigurationException, ProtocolNotSupportedException, IOException;
-	public InputStream getInputStream() throws IOException;
-	public int getResponseCode() throws IOException;
-	public String getContentType();
-	public Map<String, List<String>> getResponseHeaders() throws IOException;
+	private static final long serialVersionUID = 1L;
+
+	public ProtocolNotSupportedException(String msg) {
+		super(msg);
+	}
 }
