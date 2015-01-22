@@ -9,7 +9,9 @@ import com.wordpress.metaphorm.authProxy.ProtocolNotSupportedException;
 import com.wordpress.metaphorm.authProxy.RedirectRequiredException;
 import com.wordpress.metaphorm.authProxy.httpClient.impl.OAuthProxyConnectionApacheHttpCommonsClientImpl;
 import com.wordpress.metaphorm.authProxy.httpClient.impl.OAuthProxyConnectionHttpURLConnectionImpl;
-import com.wordpress.metaphorm.authProxy.httpClient.impl.OAuthProxyConnectionImpl;
+import com.wordpress.metaphorm.authProxy.oauthClient.OAuthCommunicationException;
+import com.wordpress.metaphorm.authProxy.oauthClient.OAuthExpectationFailedException;
+import com.wordpress.metaphorm.authProxy.oauthClient.OAuthNotAuthorizedException;
 import com.wordpress.metaphorm.authProxy.oauthClient.OAuthProviderConnection;
 import com.wordpress.metaphorm.authProxy.oauthClient.impl.OAuthProviderConnectionSignpostImpl;
 import com.wordpress.metaphorm.authProxy.sb.NoSuchOAuthProviderException;
@@ -17,8 +19,6 @@ import com.wordpress.metaphorm.authProxy.sb.model.OAuthProvider;
 import com.wordpress.metaphorm.authProxy.sb.service.OAuthProviderLocalServiceUtil;
 import com.wordpress.metaphorm.authProxy.state.ExpiredStateException;
 import com.wordpress.metaphorm.authProxy.state.OAuthState;
-import com.wordpress.metaphorm.authProxy.state.OAuthStateManager;
-import com.wordpress.metaphorm.authProxy.state.OAuthStateWrapper;
 
 import java.io.IOException;
 import java.net.MalformedURLException;
@@ -28,12 +28,6 @@ import java.util.regex.Pattern;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
-
-import oauth.signpost.exception.OAuthCommunicationException;
-import oauth.signpost.exception.OAuthException;
-import oauth.signpost.exception.OAuthExpectationFailedException;
-import oauth.signpost.exception.OAuthMessageSignerException;
-import oauth.signpost.exception.OAuthNotAuthorizedException;
 
 public class AuthProxyConnectionFactory {
 
@@ -127,8 +121,10 @@ public class AuthProxyConnectionFactory {
 									oAuthConn.connect();
 									
 									oAuthConn.sign(this.getHttpMethod());
-									
-								} catch (OAuthMessageSignerException e) {
+								
+								} catch (ProtocolNotSupportedException e) {
+									e.printStackTrace();
+								} catch (oauth.signpost.exception.OAuthMessageSignerException e) {
 									e.printStackTrace();
 								} catch (OAuthExpectationFailedException e) {
 									e.printStackTrace();
@@ -183,7 +179,9 @@ public class AuthProxyConnectionFactory {
 									
 									oAuthConn.sign(this.getHttpURLConnection());
 									
-								} catch (OAuthMessageSignerException e) {
+								} catch (ProtocolNotSupportedException e) {
+									e.printStackTrace();
+								} catch (oauth.signpost.exception.OAuthMessageSignerException e) {
 									e.printStackTrace();
 								} catch (OAuthExpectationFailedException e) {
 									e.printStackTrace();
@@ -335,7 +333,7 @@ public class AuthProxyConnectionFactory {
 			HttpServletRequest servletReq,
 			HttpServletResponse servletResp)
 	
-					throws IOException, RedirectRequiredException, ExpiredStateException, NoSuchOAuthProviderException, SystemException, OAuthProviderConfigurationException {
+					throws IOException, RedirectRequiredException, ExpiredStateException, NoSuchOAuthProviderException, SystemException, OAuthProviderConfigurationException, ProtocolNotSupportedException {
 		
 		// OAuth 1.0a callback
 		if (servletReq.getParameter("oauth_realm") != null
@@ -373,24 +371,25 @@ public class AuthProxyConnectionFactory {
 				
 				handleOAuth10ACallback(oAuthRealm, token, verifier, callbackURL);
 				
-			} catch (OAuthException e) {
+			} catch (OAuthCommunicationException e) {
 				
-				throw new IOException(e);
+				_log.error(e);
 				
-			} catch (ProtocolNotSupportedException e) {
+			} catch (OAuthExpectationFailedException e) {
 				
-				e.printStackTrace();
+				_log.error(e);
+				
+			} catch (OAuthNotAuthorizedException e) {
+				
+				_log.warn(e);
 			}
 
 		}
 	}
 	
-	private void handleOAuth10ACallback(String oAuthRealm, String token, final String verifier, URL callbackURL) throws ExpiredStateException,
-			OAuthCommunicationException, OAuthExpectationFailedException,
-			OAuthNotAuthorizedException, OAuthMessageSignerException,
-			NoSuchOAuthProviderException, SystemException, IOException, OAuthProviderConfigurationException, ProtocolNotSupportedException {
-		
-		//OAuthState oAuthState = OAuthStateManager.getRelatedOAuthState(oAuthRealm, token);
+	private void handleOAuth10ACallback(String oAuthRealm, String token, final String verifier, URL callbackURL) throws 
+				ExpiredStateException, OAuthCommunicationException, OAuthExpectationFailedException, OAuthNotAuthorizedException,
+				NoSuchOAuthProviderException, SystemException, IOException, OAuthProviderConfigurationException, ProtocolNotSupportedException {
 		
 		OAuthProvider oAuthProvider = OAuthProviderLocalServiceUtil.getProviderForRealm(oAuthRealm);
 		OAuthProviderConnection oAuthConn = getOAuth10AProviderConnection(oAuthProvider);

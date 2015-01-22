@@ -23,7 +23,11 @@ import com.liferay.portal.kernel.exception.SystemException;
 import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
 import com.wordpress.metaphorm.authProxy.OAuthProviderConfigurationException;
+import com.wordpress.metaphorm.authProxy.ProtocolNotSupportedException;
 import com.wordpress.metaphorm.authProxy.httpClient.AuthProxyConnection;
+import com.wordpress.metaphorm.authProxy.oauthClient.OAuthCommunicationException;
+import com.wordpress.metaphorm.authProxy.oauthClient.OAuthExpectationFailedException;
+import com.wordpress.metaphorm.authProxy.oauthClient.OAuthNotAuthorizedException;
 import com.wordpress.metaphorm.authProxy.oauthClient.OAuthProviderConnection;
 import com.wordpress.metaphorm.authProxy.sb.NoSuchOAuthProviderException;
 import com.wordpress.metaphorm.authProxy.sb.service.OAuthProviderLocalServiceUtil;
@@ -35,6 +39,7 @@ import java.io.IOException;
 import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
 
+/*
 import oauth.signpost.OAuthConsumer;
 import oauth.signpost.OAuthProvider;
 import oauth.signpost.basic.DefaultOAuthConsumer;
@@ -44,6 +49,14 @@ import oauth.signpost.exception.OAuthCommunicationException;
 import oauth.signpost.exception.OAuthExpectationFailedException;
 import oauth.signpost.exception.OAuthMessageSignerException;
 import oauth.signpost.exception.OAuthNotAuthorizedException;
+*/
+
+import oauth.signpost.OAuthConsumer;
+import oauth.signpost.OAuthProvider;
+import oauth.signpost.basic.DefaultOAuthConsumer;
+import oauth.signpost.basic.DefaultOAuthProvider;
+import oauth.signpost.commonshttp3.CommonsHttp3OAuthConsumer;
+import oauth.signpost.exception.OAuthMessageSignerException;
 
 import org.apache.commons.httpclient.HttpMethod;
 
@@ -125,7 +138,11 @@ public class OAuthProviderConnectionSignpostImpl implements OAuthProviderConnect
 	 * @see com.wordpress.metaphorm.authProxy.OAuthProviderConnection_int#connect()
 	 */
 	@Override
-	public void connect() throws OAuthProviderConfigurationException, NoSuchOAuthProviderException, OAuthMessageSignerException, SystemException, ExpiredStateException {
+	public void connect() throws 
+	
+			OAuthProviderConfigurationException,
+			NoSuchOAuthProviderException, ProtocolNotSupportedException,
+			SystemException, ExpiredStateException {
 		
 		
 		if (this.sbOAuthProvider == null && realm != null)
@@ -158,8 +175,9 @@ public class OAuthProviderConnectionSignpostImpl implements OAuthProviderConnect
 	 */
 	@Override
 	public String retrieveRequestToken(String oauth_callback) 
-			throws OAuthCommunicationException, OAuthMessageSignerException, 
-			OAuthNotAuthorizedException, OAuthExpectationFailedException, ExpiredStateException {
+			throws OAuthCommunicationException, ProtocolNotSupportedException,
+			OAuthNotAuthorizedException, OAuthExpectationFailedException,
+			ExpiredStateException {
 				
 		if (!connected) throw new RuntimeException("OAuth provider not connected");
 		OAuthCredentials oAuthCredentials = oAuthState.getOAuthCredentials(realm);
@@ -170,7 +188,20 @@ public class OAuthProviderConnectionSignpostImpl implements OAuthProviderConnect
 		
 		OAuthConsumer oAuthConsumer = getOAuthConsumer(oAuthCredentials);
 		
-		String nextURL = oAuthProvider.retrieveRequestToken(oAuthConsumer, oauth_callback);
+		String nextURL;
+		try {
+			
+			nextURL = oAuthProvider.retrieveRequestToken(oAuthConsumer, oauth_callback);
+			
+		} catch (OAuthMessageSignerException e) {
+			throw new ProtocolNotSupportedException(e.getMessage());
+		} catch (oauth.signpost.exception.OAuthNotAuthorizedException e) {
+			throw new OAuthNotAuthorizedException(e.getMessage(), e);
+		} catch (oauth.signpost.exception.OAuthExpectationFailedException e) {
+			throw new OAuthExpectationFailedException(e.getMessage(), e);
+		} catch (oauth.signpost.exception.OAuthCommunicationException e) {
+			throw new OAuthCommunicationException(e.getMessage(), e);
+		}
 		
 		oAuthState.setPhase(realm, OAuthState.AUTHORISE_PHASE);
 		
@@ -225,8 +256,9 @@ public class OAuthProviderConnectionSignpostImpl implements OAuthProviderConnect
 	 */
 	@Override
 	public void retrieveAccessToken() 
-			throws 	OAuthCommunicationException, OAuthExpectationFailedException, 
-					OAuthNotAuthorizedException, OAuthMessageSignerException, ExpiredStateException {
+			throws OAuthCommunicationException,
+				OAuthExpectationFailedException, OAuthNotAuthorizedException,
+				ProtocolNotSupportedException, ExpiredStateException {
 		
 		if (!connected) throw new RuntimeException("OAuth provider not connected");
 		
@@ -237,7 +269,17 @@ public class OAuthProviderConnectionSignpostImpl implements OAuthProviderConnect
 		
 		OAuthConsumer oAuthConsumer = getOAuthConsumer(oAuthCredentials);
 		
-		getSignpostOAuthProvider().retrieveAccessToken(oAuthConsumer, verificationCode);
+		try {
+			getSignpostOAuthProvider().retrieveAccessToken(oAuthConsumer, verificationCode);
+		} catch (OAuthMessageSignerException e) {
+			throw new ProtocolNotSupportedException(e.getMessage());
+		} catch (oauth.signpost.exception.OAuthNotAuthorizedException e) {
+			throw new OAuthNotAuthorizedException(e.getMessage(), e);
+		} catch (oauth.signpost.exception.OAuthExpectationFailedException e) {
+			throw new OAuthExpectationFailedException(e.getMessage(), e);
+		} catch (oauth.signpost.exception.OAuthCommunicationException e) {
+			throw new OAuthCommunicationException(e.getMessage(), e);
+		}
 		
 		oAuthState.setVerifier(realm, null);
 		oAuthState.setPhase(realm, OAuthState.RESOURCE_PHASE);
@@ -259,7 +301,16 @@ public class OAuthProviderConnectionSignpostImpl implements OAuthProviderConnect
 		if (!connected) throw new RuntimeException("OAuth provider not connected");
 		
 		OAuthCredentials oAuthCredentials = getOAuthCredentials();
-		getOAuthConsumer(oAuthCredentials).sign(uRLConn);		
+		
+		try {
+			
+			getOAuthConsumer(oAuthCredentials).sign(uRLConn);
+			
+		} catch (oauth.signpost.exception.OAuthExpectationFailedException e) {
+			throw new OAuthExpectationFailedException(e.getMessage(), e);
+		} catch (oauth.signpost.exception.OAuthCommunicationException e) {
+			throw new OAuthCommunicationException(e.getMessage(), e);
+		}
 	}
 	
 	public void sign(HttpMethod httpMethod) 
@@ -288,7 +339,13 @@ public class OAuthProviderConnectionSignpostImpl implements OAuthProviderConnect
 		_log.debug("consumer.getTokenSecret() = " + consumer.getTokenSecret());
 		_log.debug("**** SIGNING INPUT END ****");
 		
-		consumer.sign(httpMethod);
+		try {
+			consumer.sign(httpMethod);
+		} catch (oauth.signpost.exception.OAuthExpectationFailedException e) {
+			throw new OAuthExpectationFailedException(e.getMessage(), e);
+		} catch (oauth.signpost.exception.OAuthCommunicationException e) {
+			throw new OAuthCommunicationException(e.getMessage(), e);
+		}
 	}
 	
 	private static Log _log = LogFactoryUtil.getLog(OAuthProviderConnectionSignpostImpl.class);

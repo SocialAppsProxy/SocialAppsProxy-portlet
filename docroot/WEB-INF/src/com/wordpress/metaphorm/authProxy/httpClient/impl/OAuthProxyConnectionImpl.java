@@ -28,6 +28,9 @@ import com.wordpress.metaphorm.authProxy.ProtocolNotSupportedException;
 import com.wordpress.metaphorm.authProxy.RedirectRequiredException;
 import com.wordpress.metaphorm.authProxy.httpClient.AuthProxyConnection;
 import com.wordpress.metaphorm.authProxy.httpClient.AuthProxyConnectionFactory;
+import com.wordpress.metaphorm.authProxy.oauthClient.OAuthCommunicationException;
+import com.wordpress.metaphorm.authProxy.oauthClient.OAuthExpectationFailedException;
+import com.wordpress.metaphorm.authProxy.oauthClient.OAuthNotAuthorizedException;
 import com.wordpress.metaphorm.authProxy.oauthClient.OAuthProviderConnection;
 import com.wordpress.metaphorm.authProxy.sb.NoSuchOAuthProviderException;
 import com.wordpress.metaphorm.authProxy.sb.model.OAuthProvider;
@@ -49,11 +52,6 @@ import java.util.regex.Pattern;
 import javax.servlet.http.HttpServletRequest;
 
 import org.apache.commons.httpclient.Header;
-
-import oauth.signpost.exception.OAuthCommunicationException;
-import oauth.signpost.exception.OAuthExpectationFailedException;
-import oauth.signpost.exception.OAuthMessageSignerException;
-import oauth.signpost.exception.OAuthNotAuthorizedException;
 
 /**
  * @author Stian Sigvartsen
@@ -263,17 +261,13 @@ public class OAuthProxyConnectionImpl implements AuthProxyConnection { //extends
 			throw new IOException(e);
 		} catch (OAuthExpectationFailedException e) {
 			throw new IOException(e);
-		} catch (OAuthMessageSignerException e) {
-			throw new IOException(e);
 		} catch (OAuthCommunicationException e) {
 			throw new IOException(e);
 		} catch (OAuthNotAuthorizedException e) {
 			throw new IOException(e);
 		} catch (NoSuchOAuthProviderException e) {
-			// TODO Auto-generated catch block
 			e.printStackTrace();
 		} catch (SystemException e) {
-			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
 	}

@@ -2,6 +2,7 @@ package com.wordpress.metaphorm.authProxy.oauthClient;
 
 import com.liferay.portal.kernel.exception.SystemException;
 import com.wordpress.metaphorm.authProxy.OAuthProviderConfigurationException;
+import com.wordpress.metaphorm.authProxy.ProtocolNotSupportedException;
 import com.wordpress.metaphorm.authProxy.httpClient.AuthProxyConnection;
 import com.wordpress.metaphorm.authProxy.sb.NoSuchOAuthProviderException;
 import com.wordpress.metaphorm.authProxy.sb.model.OAuthProvider;
@@ -10,15 +11,14 @@ import com.wordpress.metaphorm.authProxy.state.ExpiredStateException;
 import java.io.IOException;
 import java.net.MalformedURLException;
 
-import oauth.signpost.exception.OAuthCommunicationException;
-import oauth.signpost.exception.OAuthExpectationFailedException;
-import oauth.signpost.exception.OAuthMessageSignerException;
-import oauth.signpost.exception.OAuthNotAuthorizedException;
+import com.wordpress.metaphorm.authProxy.oauthClient.OAuthCommunicationException;
+import com.wordpress.metaphorm.authProxy.oauthClient.OAuthExpectationFailedException;
+import com.wordpress.metaphorm.authProxy.oauthClient.OAuthNotAuthorizedException;
 
 public interface OAuthProviderConnection {
 
 	public void connect() throws OAuthProviderConfigurationException,
-			NoSuchOAuthProviderException, OAuthMessageSignerException,
+			NoSuchOAuthProviderException, ProtocolNotSupportedException,
 			SystemException, ExpiredStateException;
 
 	/**
@@ -32,7 +32,7 @@ public interface OAuthProviderConnection {
 	 * @throws OAuthExpectationFailedException
 	 */
 	public String retrieveRequestToken(String oauth_callback)
-			throws OAuthCommunicationException, OAuthMessageSignerException,
+			throws OAuthCommunicationException, ProtocolNotSupportedException,
 			OAuthNotAuthorizedException, OAuthExpectationFailedException,
 			ExpiredStateException;
 
@@ -44,14 +44,9 @@ public interface OAuthProviderConnection {
 	
 	public void retrieveAccessToken() throws OAuthCommunicationException,
 			OAuthExpectationFailedException, OAuthNotAuthorizedException,
-			OAuthMessageSignerException, ExpiredStateException;
+			ProtocolNotSupportedException, ExpiredStateException;
 	
 	public AuthProxyConnection getAuthProxyConnection() throws MalformedURLException, IOException;
 	
-	public OAuthProvider getOAuthProvider(); 
-	
-	/*
-	public void signRequest() 
-			throws OAuthMessageSignerException, OAuthExpectationFailedException, OAuthCommunicationException, ExpiredStateException;
-	 */
+	public OAuthProvider getOAuthProvider(); 	
 }
