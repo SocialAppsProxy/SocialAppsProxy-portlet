@@ -182,7 +182,7 @@ public class OAuthProviderConnectionSignpostImpl implements OAuthProviderConnect
 			
 			_log.debug("**** Request token already retrieved: " + oAuthCredentials.getToken());
 			
-			nextURL = oAuthProvider.getAuthorizationWebsiteUrl() + "?oauth_token=" + oAuthCredentials.getToken();
+			nextURL = oAuthProvider.getAuthorizationWebsiteUrl() + "?oauth_token=" + URLEncoder.encode(oAuthCredentials.getToken());
 
 		} else {
 			
