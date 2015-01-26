@@ -15,7 +15,7 @@ import com.wordpress.metaphorm.authProxy.oauthClient.OAuthCommunicationException
 import com.wordpress.metaphorm.authProxy.oauthClient.OAuthExpectationFailedException;
 import com.wordpress.metaphorm.authProxy.oauthClient.OAuthNotAuthorizedException;
 
-public interface OAuthProviderConnection {
+public interface OAuthClient {
 
 	public void connect() throws OAuthProviderConfigurationException,
 			NoSuchOAuthProviderException, ProtocolNotSupportedException,

@@ -10,8 +10,8 @@ import com.wordpress.metaphorm.authProxy.httpClient.impl.OAuthProxyConnectionApa
 import com.wordpress.metaphorm.authProxy.httpClient.impl.OAuthProxyConnectionHttpURLConnectionImpl;
 import com.wordpress.metaphorm.authProxy.oauthClient.OAuthCommunicationException;
 import com.wordpress.metaphorm.authProxy.oauthClient.OAuthExpectationFailedException;
-import com.wordpress.metaphorm.authProxy.oauthClient.OAuthProviderConnection;
-import com.wordpress.metaphorm.authProxy.oauthClient.impl.OAuthProviderConnectionSignpostImpl;
+import com.wordpress.metaphorm.authProxy.oauthClient.OAuthClient;
+import com.wordpress.metaphorm.authProxy.oauthClient.impl.OAuthClientSignpostImpl;
 import com.wordpress.metaphorm.authProxy.sb.NoSuchOAuthProviderException;
 import com.wordpress.metaphorm.authProxy.sb.model.OAuthProvider;
 import com.wordpress.metaphorm.authProxy.sb.service.OAuthProviderLocalServiceUtil;
@@ -65,7 +65,7 @@ public class AuthProxyConnectionFactory {
 		return uRLConn;
 	}
 	
-	public OAuthProviderConnection getOAuth20ProviderConnection(OAuthProvider realmProvider) 
+	public OAuthClient getOAuth20Client(OAuthProvider realmProvider) 
 			throws OAuthProviderConfigurationException, ProtocolNotSupportedException, IOException {
 		
 		throw new ProtocolNotSupportedException("OAuth 2.0 not supported");
@@ -81,7 +81,7 @@ public class AuthProxyConnectionFactory {
 	 * @throws OAuthProviderConfigurationException
 	 * @throws IOException
 	 */
-	public OAuthProviderConnection getOAuth10AProviderConnection(OAuthProvider realmProvider) 
+	public OAuthClient getOAuth10AClient(OAuthProvider realmProvider) 
 			throws OAuthProviderConfigurationException, ProtocolNotSupportedException, IOException {
 		
 		if (realmProvider.getProtocolVersion().equalsIgnoreCase("1.0a")) {
@@ -91,14 +91,14 @@ public class AuthProxyConnectionFactory {
 			if (OAUTH_10A_HTTP_CLIENT == APACHE_HTTP_COMMONS_CLIENT_3) {
 			
 				// Inline class to bootstrap getAuthProxyConnection() to return a signing connection ...
-				final OAuthProviderConnectionSignpostImpl oAuthConn = new OAuthProviderConnectionSignpostImpl(realmProvider, oAuthState) {
+				final OAuthClientSignpostImpl oAuthConn = new OAuthClientSignpostImpl(realmProvider, oAuthState) {
 					
 					public AuthProxyConnection getAuthProxyConnection() throws MalformedURLException, IOException {
 	
-						final OAuthProviderConnectionSignpostImpl instantiatedOAuthConn = this;
+						final OAuthClientSignpostImpl instantiatedOAuthConn = this;
 						
 						// ... which signs OAuth 1.0a credentials upon sending requests 
-						final OAuthProxyConnectionApacheHttpCommonsClientImpl uRLConn = new OAuthProxyConnectionApacheHttpCommonsClientImpl(servletReq/*, oAuthState*/) {
+						final OAuthProxyConnectionApacheHttpCommonsClientImpl uRLConn = new OAuthProxyConnectionApacheHttpCommonsClientImpl(servletReq) {
 							
 							@Override
 							public boolean isNegotiatingConnection() {
@@ -108,7 +108,7 @@ public class AuthProxyConnectionFactory {
 							@Override
 							public void sendRequest() throws IOException {
 							
-								OAuthProviderConnectionSignpostImpl oAuthConn = instantiatedOAuthConn;
+								OAuthClientSignpostImpl oAuthConn = instantiatedOAuthConn;
 								
 								// Sign the request just before sending it
 								try {
@@ -148,11 +148,11 @@ public class AuthProxyConnectionFactory {
 			} else {
 			
 				// Inline class to bootstrap getAuthProxyConnection() to return a signing connection ...
-				final OAuthProviderConnectionSignpostImpl oAuthConn = new OAuthProviderConnectionSignpostImpl(realmProvider, oAuthState) {
+				final OAuthClientSignpostImpl oAuthConn = new OAuthClientSignpostImpl(realmProvider, oAuthState) {
 					
 					public AuthProxyConnection getAuthProxyConnection() throws MalformedURLException, IOException {
 	
-						final OAuthProviderConnectionSignpostImpl instantiatedOAuthConn = this;
+						final OAuthClientSignpostImpl instantiatedOAuthConn = this;
 						
 						// ... which signs OAuth 1.0a credentials upon sending requests 
 						final OAuthProxyConnectionHttpURLConnectionImpl uRLConn = new OAuthProxyConnectionHttpURLConnectionImpl(servletReq) {
@@ -165,7 +165,7 @@ public class AuthProxyConnectionFactory {
 							@Override
 							public void sendRequest() throws IOException {
 							
-								OAuthProviderConnectionSignpostImpl oAuthConn = instantiatedOAuthConn;
+								OAuthClientSignpostImpl oAuthConn = instantiatedOAuthConn;
 								
 								// Sign the request just before sending it
 								try {
@@ -208,7 +208,7 @@ public class AuthProxyConnectionFactory {
 	}
 	
 	
-	public OAuthProviderConnection getProviderConnection(URL uRL) throws NoSuchOAuthProviderException, SystemException, OAuthProviderConfigurationException, ProtocolNotSupportedException, IOException {
+	public OAuthClient getOAuthClient(URL uRL) throws NoSuchOAuthProviderException, SystemException, OAuthProviderConfigurationException, ProtocolNotSupportedException, IOException {
 		
 		OAuthProvider preEmptiveProvider = OAuthProviderLocalServiceUtil.getMatchingOAuthProvider(uRL);	
 
@@ -216,12 +216,12 @@ public class AuthProxyConnectionFactory {
 
 			if (preEmptiveProvider.getProtocolVersion().equalsIgnoreCase("2.0")) {
 			
-				return getOAuth20ProviderConnection(preEmptiveProvider);
+				return getOAuth20Client(preEmptiveProvider);
 			}
 
 			if (preEmptiveProvider.getProtocolVersion().equalsIgnoreCase("1.0a")) {
 			
-				return getOAuth10AProviderConnection(preEmptiveProvider);
+				return getOAuth10AClient(preEmptiveProvider);
 			}
 		}
 		
@@ -229,7 +229,7 @@ public class AuthProxyConnectionFactory {
 	}
 		
 	
-	public OAuthProviderConnection getProviderConnection(String authChallengeStr) throws NoSuchOAuthProviderException, SystemException, OAuthProviderConfigurationException, ProtocolNotSupportedException, IOException {
+	public OAuthClient getOAuthClient(String authChallengeStr) throws NoSuchOAuthProviderException, SystemException, OAuthProviderConfigurationException, ProtocolNotSupportedException, IOException {
 		
 		String realm = null;
 		String oAuthVersion = null;
@@ -242,7 +242,7 @@ public class AuthProxyConnectionFactory {
 				oAuthVersion = "2.0";
 				oAuthProvider = OAuthProviderLocalServiceUtil.getProviderForRealm(realm);
 				
-				return getOAuth20ProviderConnection(oAuthProvider);
+				return getOAuth20Client(oAuthProvider);
 				
 			}
 			
@@ -251,7 +251,7 @@ public class AuthProxyConnectionFactory {
 				oAuthVersion = "1.0a";
 				oAuthProvider = OAuthProviderLocalServiceUtil.getProviderForRealm(realm);
 				
-				return getOAuth10AProviderConnection(oAuthProvider);
+				return getOAuth10AClient(oAuthProvider);
 			}
 			
 		} catch (NoSuchOAuthProviderException e) {

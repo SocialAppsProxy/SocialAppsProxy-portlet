@@ -30,7 +30,7 @@ import com.wordpress.metaphorm.authProxy.httpClient.AuthProxyConnectionFactory;
 import com.wordpress.metaphorm.authProxy.oauthClient.OAuthCommunicationException;
 import com.wordpress.metaphorm.authProxy.oauthClient.OAuthExpectationFailedException;
 import com.wordpress.metaphorm.authProxy.oauthClient.OAuthNotAuthorizedException;
-import com.wordpress.metaphorm.authProxy.oauthClient.OAuthProviderConnection;
+import com.wordpress.metaphorm.authProxy.oauthClient.OAuthClient;
 import com.wordpress.metaphorm.authProxy.sb.NoSuchOAuthProviderException;
 import com.wordpress.metaphorm.authProxy.state.ExpiredStateException;
 
@@ -143,13 +143,13 @@ public class OAuthProxyConnectionImpl implements AuthProxyConnection { //extends
 
 		try {
 			
-			OAuthProviderConnection preEmptiveOAuthConn;
-			OAuthProviderConnection oAuthConn;
+			OAuthClient preEmptiveOAuthConn;
+			OAuthClient oAuthConn;
 			String oAuthRealm;
 			
 			try {
 				
-				preEmptiveOAuthConn = connectionFactory.getProviderConnection(getRequestedURL());			
+				preEmptiveOAuthConn = connectionFactory.getOAuthClient(getRequestedURL());			
 				
 				oAuthRealm = preEmptiveOAuthConn.getOAuthProvider().getRealm();
 				_log.debug("AuthProxyHttpURLConnection :: Derived OAuth realm as \"" + oAuthRealm + "\"");
@@ -186,7 +186,7 @@ public class OAuthProxyConnectionImpl implements AuthProxyConnection { //extends
 					// The following line can throw a ProtocolNotSupportedException if the version of OAuth
 					// that the OAuthProvider entity has been configured with is not supported on the portal this app is deployed to.
 					// TODO: Consider if this should be a PortalException or SystemException instead
-					oAuthConn = connectionFactory.getProviderConnection(authChallengeStr);
+					oAuthConn = connectionFactory.getOAuthClient(authChallengeStr);
 					
 					if (oAuthConn == null) {
 						

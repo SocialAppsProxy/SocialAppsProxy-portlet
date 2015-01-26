@@ -7,7 +7,7 @@ import com.wordpress.metaphorm.authProxy.httpClient.AuthProxyConnectionFactory;
 import com.wordpress.metaphorm.authProxy.oauthClient.OAuthCommunicationException;
 import com.wordpress.metaphorm.authProxy.oauthClient.OAuthExpectationFailedException;
 import com.wordpress.metaphorm.authProxy.oauthClient.OAuthNotAuthorizedException;
-import com.wordpress.metaphorm.authProxy.oauthClient.OAuthProviderConnection;
+import com.wordpress.metaphorm.authProxy.oauthClient.OAuthClient;
 import com.wordpress.metaphorm.authProxy.sb.NoSuchOAuthProviderException;
 import com.wordpress.metaphorm.authProxy.sb.model.OAuthProvider;
 import com.wordpress.metaphorm.authProxy.sb.service.OAuthProviderLocalServiceUtil;
@@ -71,10 +71,10 @@ public class OAuth10ACallbackHandler {
 		
 		OAuthState oAuthState = OAuthStateManager.getRelatedOAuthState(oAuthRealm, token);
 		
-		OAuthProviderConnection oAuthConn;
+		OAuthClient oAuthConn;
 		if (oAuthState != null) {
 			
-			oAuthConn = AuthProxyConnectionFactory.getFactory(servletReq, oAuthState).getOAuth10AProviderConnection(oAuthProvider);
+			oAuthConn = AuthProxyConnectionFactory.getFactory(servletReq, oAuthState).getOAuth10AClient(oAuthProvider);
 			
 			// Retrieve access token
 			oAuthConn.connect();

@@ -28,7 +28,7 @@ import com.wordpress.metaphorm.authProxy.httpClient.AuthProxyConnection;
 import com.wordpress.metaphorm.authProxy.oauthClient.OAuthCommunicationException;
 import com.wordpress.metaphorm.authProxy.oauthClient.OAuthExpectationFailedException;
 import com.wordpress.metaphorm.authProxy.oauthClient.OAuthNotAuthorizedException;
-import com.wordpress.metaphorm.authProxy.oauthClient.OAuthProviderConnection;
+import com.wordpress.metaphorm.authProxy.oauthClient.OAuthClient;
 import com.wordpress.metaphorm.authProxy.sb.NoSuchOAuthProviderException;
 import com.wordpress.metaphorm.authProxy.sb.service.OAuthProviderLocalServiceUtil;
 import com.wordpress.metaphorm.authProxy.state.ExpiredStateException;
@@ -52,7 +52,7 @@ import org.apache.commons.httpclient.HttpMethod;
 /**
  * @author Stian Sigvartsen
  */
-public class OAuthProviderConnectionSignpostImpl implements OAuthProviderConnection {
+public class OAuthClientSignpostImpl implements OAuthClient {
 
 	boolean connected;
 	String realm;
@@ -60,7 +60,7 @@ public class OAuthProviderConnectionSignpostImpl implements OAuthProviderConnect
 	DefaultOAuthProvider oAuthProvider;
 	com.wordpress.metaphorm.authProxy.sb.model.OAuthProvider sbOAuthProvider;
 	
-	public OAuthProviderConnectionSignpostImpl(com.wordpress.metaphorm.authProxy.sb.model.OAuthProvider provider, OAuthState oAuthState) {
+	public OAuthClientSignpostImpl(com.wordpress.metaphorm.authProxy.sb.model.OAuthProvider provider, OAuthState oAuthState) {
 		
 		this.sbOAuthProvider = provider;
 		this.oAuthState = oAuthState;
@@ -68,7 +68,7 @@ public class OAuthProviderConnectionSignpostImpl implements OAuthProviderConnect
 		_log.debug("Constructing with provider for realm \"" + provider.getRealm() + "\"");
 	}
 	
-	public OAuthProviderConnectionSignpostImpl(String realm, OAuthState oAuthState) {
+	public OAuthClientSignpostImpl(String realm, OAuthState oAuthState) {
 		
 		_log.debug("Constructing without provider for realm \"" + realm + "\"");
 		
@@ -123,9 +123,6 @@ public class OAuthProviderConnectionSignpostImpl implements OAuthProviderConnect
 		return oAuthProvider;
 	}
 	
-	/* (non-Javadoc)
-	 * @see com.wordpress.metaphorm.authProxy.OAuthProviderConnection_int#connect()
-	 */
 	@Override
 	public void connect() throws 
 	
@@ -159,9 +156,6 @@ public class OAuthProviderConnectionSignpostImpl implements OAuthProviderConnect
 	}	
 			
 	
-	/* (non-Javadoc)
-	 * @see com.wordpress.metaphorm.authProxy.OAuthProviderConnection_int#retrieveRequestToken(java.lang.String)
-	 */
 	@Override
 	public String retrieveRequestToken(String oauth_callback) 
 			throws OAuthCommunicationException, ProtocolNotSupportedException,
@@ -220,9 +214,6 @@ public class OAuthProviderConnectionSignpostImpl implements OAuthProviderConnect
 		return nextURL;
 	}
 	
-	/* (non-Javadoc)
-	 * @see com.wordpress.metaphorm.authProxy.OAuthProviderConnection_int#isAuthorised()
-	 */
 	@Override
 	public boolean isAuthorised() throws ExpiredStateException {
 		
@@ -233,9 +224,6 @@ public class OAuthProviderConnectionSignpostImpl implements OAuthProviderConnect
 		return oAuthState.getPhase(realm) >= OAuthState.RESOURCE_PHASE;
 	}
 	
-	/* (non-Javadoc)
-	 * @see com.wordpress.metaphorm.authProxy.OAuthProviderConnection_int#getToken()
-	 */
 	@Override
 	public String getToken() throws ExpiredStateException {	
 		
@@ -253,9 +241,6 @@ public class OAuthProviderConnectionSignpostImpl implements OAuthProviderConnect
 		this.oAuthState.commitChanges(realm);
 	}
 	
-	/* (non-Javadoc)
-	 * @see com.wordpress.metaphorm.authProxy.OAuthProviderConnection_int#retrieveAccessToken()
-	 */
 	@Override
 	public void retrieveAccessToken() 
 			throws OAuthCommunicationException,
@@ -350,7 +335,7 @@ public class OAuthProviderConnectionSignpostImpl implements OAuthProviderConnect
 		}
 	}
 	
-	private static Log _log = LogFactoryUtil.getLog(OAuthProviderConnectionSignpostImpl.class);
+	private static Log _log = LogFactoryUtil.getLog(OAuthClientSignpostImpl.class);
 
 	@Override
 	public AuthProxyConnection getAuthProxyConnection() throws MalformedURLException, IOException {
