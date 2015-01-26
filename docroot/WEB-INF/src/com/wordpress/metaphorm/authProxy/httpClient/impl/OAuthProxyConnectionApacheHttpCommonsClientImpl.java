@@ -429,7 +429,7 @@ public class OAuthProxyConnectionApacheHttpCommonsClientImpl extends AbstractOAu
     @SuppressWarnings("unchecked")
 	private void setProxyRequestHeaders(HttpServletRequest httpServletRequest, HttpMethod httpMethodProxyRequest) {
     	// Get an Enumeration of all of the header names sent by the client
-		Enumeration enumerationOfHeaderNames = httpServletRequest.getHeaderNames();
+		Enumeration<String> enumerationOfHeaderNames = httpServletRequest.getHeaderNames();
 		while(enumerationOfHeaderNames.hasMoreElements()) {
 			String stringHeaderName = (String) enumerationOfHeaderNames.nextElement();
 			if(stringHeaderName.equalsIgnoreCase(HttpConstants.STRING_CONTENT_LENGTH_HEADER_NAME))
@@ -447,7 +447,7 @@ public class OAuthProxyConnectionApacheHttpCommonsClientImpl extends AbstractOAu
 			//		as several headers each with a different value rather than
 			//		sending the header as a comma separated list.
 			// Thus, we get an Enumeration of the header values sent by the client
-			Enumeration enumerationOfHeaderValues = httpServletRequest.getHeaders(stringHeaderName);
+			Enumeration<String> enumerationOfHeaderValues = httpServletRequest.getHeaders(stringHeaderName);
 			while(enumerationOfHeaderValues.hasMoreElements()) {
 				String stringHeaderValue = (String) enumerationOfHeaderValues.nextElement();
 				// In case the proxy host is running multiple virtual servers,
