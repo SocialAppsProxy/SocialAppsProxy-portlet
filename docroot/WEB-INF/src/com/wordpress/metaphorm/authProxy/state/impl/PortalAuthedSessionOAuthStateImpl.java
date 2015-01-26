@@ -147,6 +147,9 @@ public class PortalAuthedSessionOAuthStateImpl extends HttpSessionOAuthStateImpl
 			e.printStackTrace();
 			return null;
 			
+		} catch (IllegalStateException ise) {
+			
+			throw new ExpiredStateException();
 		}
 	}
 
@@ -162,6 +165,8 @@ public class PortalAuthedSessionOAuthStateImpl extends HttpSessionOAuthStateImpl
 			
 		} catch (SystemException e) {
 			throw new RuntimeException(e);
+		} catch (IllegalStateException e) {
+			throw new ExpiredStateException();
 		}
 	}
 	

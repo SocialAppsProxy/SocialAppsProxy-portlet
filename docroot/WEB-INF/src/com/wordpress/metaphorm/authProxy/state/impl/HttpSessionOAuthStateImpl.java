@@ -104,12 +104,20 @@ public class HttpSessionOAuthStateImpl extends AbstractOAuthStateImpl implements
 	
 	@Override
 	public void setVerifier(String oAuthRealm, String verifier) throws ExpiredStateException {
-		httpSession.setAttribute("oAuthConsumer-" + oAuthRealm + "-verifier", verifier);
+		try {
+			httpSession.setAttribute("oAuthConsumer-" + oAuthRealm + "-verifier", verifier);
+		} catch (IllegalStateException e) {
+				throw new ExpiredStateException();
+		}
 	}	
 	
 	@Override
 	public String getVerifier(String oAuthRealm) throws ExpiredStateException {
-		return (String)httpSession.getAttribute("oAuthConsumer-" + oAuthRealm + "-verifier");
+		try {
+			return (String)httpSession.getAttribute("oAuthConsumer-" + oAuthRealm + "-verifier");
+		} catch (IllegalStateException e) {
+			throw new ExpiredStateException();
+		}
 	}
 
 	public long getSecondsUntilSessionExpiry() {
@@ -186,7 +194,11 @@ public class HttpSessionOAuthStateImpl extends AbstractOAuthStateImpl implements
 
 	@Override
 	public void setPhase(String oAuthRealm, int phase) throws ExpiredStateException {
-		httpSession.setAttribute("oAuthConsumer-" + oAuthRealm + "-phase", Integer.valueOf(phase));
+		try {
+			httpSession.setAttribute("oAuthConsumer-" + oAuthRealm + "-phase", Integer.valueOf(phase));
+		} catch (IllegalStateException e) {
+			throw new ExpiredStateException();
+		}
 	}
 	
 	@Override

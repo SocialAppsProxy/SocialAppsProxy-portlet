@@ -25,6 +25,7 @@ import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
 import com.liferay.portal.service.ServiceContext;
 import com.wordpress.metaphorm.authProxy.OAuthProviderConfigurationException;
+import com.wordpress.metaphorm.authProxy.ProtocolCallbackHandlerFactory;
 import com.wordpress.metaphorm.authProxy.ProtocolNotSupportedException;
 import com.wordpress.metaphorm.authProxy.RedirectRequiredException;
 import com.wordpress.metaphorm.authProxy.Utils;
@@ -169,10 +170,15 @@ public class AuthProxyServletFilter implements Filter {
 
 		try {
 			
+			// Check and handle any protocol callback requests
+			ProtocolCallbackHandlerFactory.delegateCallback(servletReq, servletResp);
+
+			/*
 			OAuthState oAuthState = OAuthStateManager.getRelatedOAuthState(servletReq.getParameter("oauth_realm"), servletReq.getParameter("oauth_token"));
 			
 			if (oAuthState != null)
 				AuthProxyConnectionFactory.getFactory(servletReq, oAuthState).delegateCallback(servletReq, servletResp);
+				*/
 			
 		} catch (RedirectRequiredException e) {
 		
