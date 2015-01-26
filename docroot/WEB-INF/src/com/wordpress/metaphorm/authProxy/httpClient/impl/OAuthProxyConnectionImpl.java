@@ -19,7 +19,6 @@ package com.wordpress.metaphorm.authProxy.httpClient.impl;
  * along with Social Apps Proxy.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-import com.liferay.counter.service.CounterLocalServiceUtil;
 import com.liferay.portal.kernel.exception.SystemException;
 import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
@@ -33,25 +32,19 @@ import com.wordpress.metaphorm.authProxy.oauthClient.OAuthExpectationFailedExcep
 import com.wordpress.metaphorm.authProxy.oauthClient.OAuthNotAuthorizedException;
 import com.wordpress.metaphorm.authProxy.oauthClient.OAuthProviderConnection;
 import com.wordpress.metaphorm.authProxy.sb.NoSuchOAuthProviderException;
-import com.wordpress.metaphorm.authProxy.sb.model.OAuthProvider;
-import com.wordpress.metaphorm.authProxy.sb.service.OAuthProviderLocalServiceUtil;
 import com.wordpress.metaphorm.authProxy.state.ExpiredStateException;
 
 import java.io.IOException;
 import java.io.InputStream;
-import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.URLEncoder;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import javax.servlet.http.HttpServletRequest;
-
-import org.apache.commons.httpclient.Header;
 
 /**
  * @author Stian Sigvartsen

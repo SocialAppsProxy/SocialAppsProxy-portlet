@@ -6,12 +6,10 @@ import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
 import com.wordpress.metaphorm.authProxy.OAuthProviderConfigurationException;
 import com.wordpress.metaphorm.authProxy.ProtocolNotSupportedException;
-import com.wordpress.metaphorm.authProxy.RedirectRequiredException;
 import com.wordpress.metaphorm.authProxy.httpClient.impl.OAuthProxyConnectionApacheHttpCommonsClientImpl;
 import com.wordpress.metaphorm.authProxy.httpClient.impl.OAuthProxyConnectionHttpURLConnectionImpl;
 import com.wordpress.metaphorm.authProxy.oauthClient.OAuthCommunicationException;
 import com.wordpress.metaphorm.authProxy.oauthClient.OAuthExpectationFailedException;
-import com.wordpress.metaphorm.authProxy.oauthClient.OAuthNotAuthorizedException;
 import com.wordpress.metaphorm.authProxy.oauthClient.OAuthProviderConnection;
 import com.wordpress.metaphorm.authProxy.oauthClient.impl.OAuthProviderConnectionSignpostImpl;
 import com.wordpress.metaphorm.authProxy.sb.NoSuchOAuthProviderException;
@@ -27,7 +25,6 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
 
 public class AuthProxyConnectionFactory {
 
@@ -62,10 +59,8 @@ public class AuthProxyConnectionFactory {
 	 */
 	public AuthProxyConnection getAuthProxyConnection() throws MalformedURLException, IOException {
 		
-		//OAuthProxyConnectionApacheHttpCommonsClientImpl uRLConn =
-		
 		if (uRLConn == null)
-			uRLConn = new OAuthProxyConnectionApacheHttpCommonsClientImpl(servletReq/*, oAuthState*/);
+			uRLConn = new OAuthProxyConnectionApacheHttpCommonsClientImpl(servletReq);
 		
 		return uRLConn;
 	}

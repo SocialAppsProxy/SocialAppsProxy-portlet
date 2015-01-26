@@ -16,7 +16,6 @@ import com.wordpress.metaphorm.authProxy.state.OAuthState;
 import com.wordpress.metaphorm.authProxy.state.OAuthStateManager;
 
 import java.io.IOException;
-import java.net.URL;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;

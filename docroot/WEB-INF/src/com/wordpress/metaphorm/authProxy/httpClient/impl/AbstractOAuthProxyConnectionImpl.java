@@ -19,7 +19,6 @@ package com.wordpress.metaphorm.authProxy.httpClient.impl;
  * along with Social Apps Proxy.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-import com.liferay.counter.service.CounterLocalServiceUtil;
 import com.liferay.portal.kernel.exception.SystemException;
 import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
@@ -36,11 +35,8 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.net.MalformedURLException;
 import java.net.URL;
-import java.net.URLEncoder;
 import java.util.List;
 import java.util.Map;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 import javax.servlet.http.HttpServletRequest;
 
@@ -68,27 +64,6 @@ public abstract class AbstractOAuthProxyConnectionImpl implements AuthProxyConne
 	protected OAuthState getOAuthState() {
 		return this.oAuthState;
 	}
-	
-	/*
-	public String extractOAuthRealm(String authChallengeStr) {
-		
-		if (authChallengeStr != null) {
-			
-			Pattern pattern = Pattern.compile("OAuth\\srealm=\"([^\"]*)\"");
-			Matcher matcher = pattern.matcher(authChallengeStr);
-			
-			if (matcher.find()) {
-				
-				String oAuthRealm = matcher.group(1);	
-				_log.debug("AuthProxyHttpURLConnection :: Was able to extract the OAuth realm: " + oAuthRealm);
-				
-				return oAuthRealm;
-			}			
-		}
-		return null;
-	}
-	*/
-	
 	
 	public static URL deriveURL(HttpServletRequest servletReq) throws MalformedURLException {
 		
@@ -123,31 +98,7 @@ public abstract class AbstractOAuthProxyConnectionImpl implements AuthProxyConne
 
 		sendRequest();
 	}
-	
-	/*
-	private URL constructCallbackURL(String oAuthRealm)
-			throws MalformedURLException {
-		
-		URL oauth_callbackObj = getOAuthCallbackURL();
-		
-		String oauth_callback = oauth_callbackObj.toString();
-		
-		oauth_callback += (oauth_callback.indexOf('?') != -1 ? "&oauth_realm=" : "?oauth_realm=") + URLEncoder.encode(oAuthRealm);
 
-		return new URL(oauth_callback);
-	}
-	*/
-	
-	/*
-	private String deriveResponseContentType(String acceptHeader) {
-		
-		if (acceptHeader == null) return "application/xml";
-	
-		String[] mimeTypes = acceptHeader.split(",");
-		return mimeTypes[0].trim();
-	}
-	*/
-	
 	public void setAuthProxyConnectionFactory(AuthProxyConnectionFactory authProxyConnectionFactory) {
 		this.authProxyConnectionFactory = authProxyConnectionFactory;
 	}
