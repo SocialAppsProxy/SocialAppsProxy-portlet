@@ -1,12 +1,33 @@
-Debugging HTTP traffic
-======================
+Social Apps Proxy
+=================
+
+What is Social Apps Proxy?
+--------------------------
+
+Social Apps Proxy is an open source plug-in for Liferay Portal. 
+
+"If you are building apps that integrate with all the things social, this app implements the most boring and complex part of that integration, and exposes a simplified interface for your app's customers to connect your app with their preferred social networks. It acts as a proxy between your app and any OAuth-based social network (like Twitter, LinkedIn, etc). OAuth is complex and difficult to get right, so this app does the magic for any number of external networks with which you wish to integrate, and does so securely within the Liferay platform!"
+
+[James Falkner, Liferay community manager. https://www.liferay.com/en_GB/web/james.falkner/blog/-/blogs/2014-liferay-marketplace-app-contest-results ]
+
+Getting started
+===============
+
+Just go to https://www.liferay.com/marketplace/-/mp/application/41226182 to download and install to your Liferay Portal instance as with any other Marketplace app. Once installed, go to the Liferay Portal control panel and the "Social Apps Proxy Manager" to configure the OAuth service providers of interest to you.
+
+Then just follow the simple on-screen instructions to consume the OAuth services from your app. There's an example hello world style app available here: https://github.com/SocialAppsProxy/SocialAppsProxy-BasicApp-portlet
+
+Inspecting OAuth service responses
+==================================
+
+It is often a lot easier to make the correct HTTP request to an OAuth service than it is to interpret the contents of its response. So to get a quick look into what the response looks like you can use a web debugging proxy.
+
+This documentation assumes you are using Charles web debugging proxy, but any HTTP proxy server which is able to act as transparent proxy should work fine too.
 
 Auth proxy supports two types of clients:
 
 * Web application client
 * Browser client
-
-This documentation assumes you are using Charles web debugging proxy, but any HTTP proxy server which is able to act as transparent proxy should work fine too.
 
 Web application client
 ----------------------
