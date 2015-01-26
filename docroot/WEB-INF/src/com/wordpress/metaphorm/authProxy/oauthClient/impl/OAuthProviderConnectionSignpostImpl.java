@@ -182,38 +182,51 @@ public class OAuthProviderConnectionSignpostImpl implements OAuthProviderConnect
 		if (!connected) throw new RuntimeException("OAuth provider not connected");
 		OAuthCredentials oAuthCredentials = oAuthState.getOAuthCredentials(realm);
 		
-		if (oAuthCredentials == null) initialiseState();
-		
-		_log.debug("**** Retrieving request token with oauth_callback = " + oauth_callback);
-		
-		OAuthConsumer oAuthConsumer = getOAuthConsumer(oAuthCredentials);
-		
 		String nextURL;
-		try {
-			
-			nextURL = oAuthProvider.retrieveRequestToken(oAuthConsumer, oauth_callback);
-			
-		} catch (OAuthMessageSignerException e) {
-			throw new ProtocolNotSupportedException(e.getMessage());
-		} catch (oauth.signpost.exception.OAuthNotAuthorizedException e) {
-			throw new OAuthNotAuthorizedException(e.getMessage(), e);
-		} catch (oauth.signpost.exception.OAuthExpectationFailedException e) {
-			throw new OAuthExpectationFailedException(e.getMessage(), e);
-		} catch (oauth.signpost.exception.OAuthCommunicationException e) {
-			throw new OAuthCommunicationException(e.getMessage(), e);
-		}
 		
-		oAuthState.setPhase(realm, OAuthState.AUTHORISE_PHASE);
-		
-		oAuthCredentials.setToken(oAuthConsumer.getToken());
-		oAuthCredentials.setTokenSecret(oAuthConsumer.getTokenSecret());
-		oAuthState.setOAuthCredentials(realm, oAuthCredentials);
-		
-		_log.debug("Received request token / request token secret: " + oAuthCredentials.getToken() + ", "+ oAuthCredentials.getTokenSecret());
+		if (!isAuthorised() 
+				&& oAuthCredentials.getToken() != null && oAuthCredentials.getToken().trim().length() > 0) {
 
-		_log.debug("Updating OAuthState...");
-		oAuthState.commitChanges(realm);
-		_log.debug("OAuthState state changes committed.");
+			// Handle case when a request token has already been retrieved.
+			// Commonly happens if there are two OAuth resources from the same OAuth provider
+			// requested in the same portal page render request
+			
+			_log.debug("**** Request token already retrieved: " + oAuthCredentials.getToken());
+			
+			nextURL = oAuthProvider.getAuthorizationWebsiteUrl() + "?oauth_token=" + oAuthCredentials.getToken();
+
+		} else {
+			
+			_log.debug("**** Retrieving request token with oauth_callback = " + oauth_callback);
+			
+			OAuthConsumer oAuthConsumer = getOAuthConsumer(oAuthCredentials);
+			
+			try {
+				
+				nextURL = oAuthProvider.retrieveRequestToken(oAuthConsumer, oauth_callback);
+				
+			} catch (OAuthMessageSignerException e) {
+				throw new ProtocolNotSupportedException(e.getMessage());
+			} catch (oauth.signpost.exception.OAuthNotAuthorizedException e) {
+				throw new OAuthNotAuthorizedException(e.getMessage(), e);
+			} catch (oauth.signpost.exception.OAuthExpectationFailedException e) {
+				throw new OAuthExpectationFailedException(e.getMessage(), e);
+			} catch (oauth.signpost.exception.OAuthCommunicationException e) {
+				throw new OAuthCommunicationException(e.getMessage(), e);
+			}
+			
+			oAuthState.setPhase(realm, OAuthState.AUTHORISE_PHASE);
+			
+			oAuthCredentials.setToken(oAuthConsumer.getToken());
+			oAuthCredentials.setTokenSecret(oAuthConsumer.getTokenSecret());
+			oAuthState.setOAuthCredentials(realm, oAuthCredentials);
+			
+			_log.debug("Received request token / request token secret: " + oAuthCredentials.getToken() + ", "+ oAuthCredentials.getTokenSecret());
+	
+			_log.debug("Updating OAuthState...");
+			oAuthState.commitChanges(realm);
+			_log.debug("OAuthState state changes committed.");
+		}
 		
 		return nextURL;
 	}
