@@ -68,7 +68,7 @@ public class AuthProxyConnectionFactory {
 	public OAuthProviderConnection getOAuth20ProviderConnection(OAuthProvider realmProvider) 
 			throws OAuthProviderConfigurationException, ProtocolNotSupportedException, IOException {
 		
-		return null;
+		throw new ProtocolNotSupportedException("OAuth 2.0 not supported");
 	}
 	
 	/**
