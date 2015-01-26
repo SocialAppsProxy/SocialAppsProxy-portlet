@@ -3,4 +3,17 @@
 
 <project name="SocialAppsProxy-portlet" basedir="." default="deploy">
 	<import file="../build-common-portlet.xml" />
+	
+	<target name="compile" depends="build-common-plugin.compile">
+		
+		<echo message="Compiling LP version specific code"/>
+		
+		<antcall target="compile-java">
+			<param name="javac.classpathref" value="portal.classpath" />
+			<param name="javac.destdir" value="docroot/WEB-INF/classes" />
+			<param name="javac.srcdir" value="docroot/WEB-INF/src-lpbind" />
+		</antcall>
+		
+	</target>
+	
 </project>
