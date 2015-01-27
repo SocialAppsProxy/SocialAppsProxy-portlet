@@ -18,11 +18,8 @@ import com.liferay.portal.kernel.exception.SystemException;
 import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
 import com.wordpress.metaphorm.authProxy.sb.NoSuchOAuthProviderException;
-import com.wordpress.metaphorm.authProxy.sb.model.OAuthConnection;
 import com.wordpress.metaphorm.authProxy.sb.model.OAuthProvider;
-import com.wordpress.metaphorm.authProxy.sb.service.OAuthProviderLocalServiceUtil;
 import com.wordpress.metaphorm.authProxy.sb.service.base.OAuthProviderLocalServiceBaseImpl;
-import com.wordpress.metaphorm.authProxy.sb.service.persistence.OAuthProviderPersistenceImpl;
 
 import java.net.URL;
 import java.util.List;

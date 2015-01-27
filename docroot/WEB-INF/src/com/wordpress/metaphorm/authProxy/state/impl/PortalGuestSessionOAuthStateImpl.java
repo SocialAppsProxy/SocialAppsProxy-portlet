@@ -19,12 +19,13 @@ package com.wordpress.metaphorm.authProxy.state.impl;
  * along with Social Apps Proxy.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+import com.liferay.portal.kernel.log.Log;
+import com.liferay.portal.kernel.log.LogFactoryUtil;
 import com.wordpress.metaphorm.authProxy.state.ExpiredStateException;
+import com.wordpress.metaphorm.authProxy.state.OAuthCredentials;
 import com.wordpress.metaphorm.authProxy.state.OAuthState;
 
 import javax.servlet.http.HttpSession;
-
-import oauth.signpost.OAuthConsumer;
 
 /**
  * @author Stian Sigvartsen
@@ -41,30 +42,12 @@ public class PortalGuestSessionOAuthStateImpl extends HttpSessionOAuthStateImpl 
 	}
 	
 	@Override
-	public void setConsumer(String oAuthRealm, OAuthConsumer consumer) throws ExpiredStateException {
-		httpSession.setAttribute("oAuthConsumer-" + oAuthRealm, consumer);
+	public void setOAuthCredentials(String oAuthRealm, OAuthCredentials oAuthCredentials) throws ExpiredStateException {
+		
+		_log.debug("setOAuthCredentials() :: oAuthCredentials" + (oAuthCredentials == null ? " is null" : ".toString() = " + oAuthCredentials.toString()));
+		httpSession.setAttribute("oAuthConsumer-" + oAuthRealm, oAuthCredentials);
 	}
 
-	@Override
-	public OAuthConsumer getOAuthConsumer(String oAuthRealm) throws ExpiredStateException {
-		
-		try {
-			
-			OAuthConsumer consumer = (OAuthConsumer)httpSession.getAttribute("oAuthConsumer-" + oAuthRealm);
-			
-			if (consumer == null) 
-				return super.getOAuthConsumer(oAuthRealm);
-			
-			return consumer;
-		
-		} catch (ClassCastException e) { 
-			
-			// This occurs upon interaction with a HttpSession from a previous app deployment.
-			// Probably because of AbstractOAuthConsumer not implementing Serializable
-			
-			return super.getOAuthConsumer(oAuthRealm);
-		}
-	}
 	
 	@Override
 	public void setPAuth(String p_auth) throws ExpiredStateException {
@@ -87,17 +70,6 @@ public class PortalGuestSessionOAuthStateImpl extends HttpSessionOAuthStateImpl 
 	}
 
 	@Override
-	public boolean isExpired() {
-		
-		try {
-			httpSession.getCreationTime();
-			return false;
-		} catch (IllegalStateException ise) {
-			return true;
-		}
-	}
-
-	@Override
 	public void setPhase(String oAuthRealm, int phase) throws ExpiredStateException {
 		httpSession.setAttribute("oAuthConsumer-" + oAuthRealm + "-phase", Integer.valueOf(phase));
 	}
@@ -115,4 +87,6 @@ public class PortalGuestSessionOAuthStateImpl extends HttpSessionOAuthStateImpl 
 	@Override
 	public void commitChanges(String oAuthRealm) {
 	}
+	
+	private static Log _log = LogFactoryUtil.getLog(PortalGuestSessionOAuthStateImpl.class);
 }

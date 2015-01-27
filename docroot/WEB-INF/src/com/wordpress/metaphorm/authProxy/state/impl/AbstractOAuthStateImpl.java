@@ -20,9 +20,8 @@ package com.wordpress.metaphorm.authProxy.state.impl;
  */
 
 import com.wordpress.metaphorm.authProxy.state.ExpiredStateException;
+import com.wordpress.metaphorm.authProxy.state.OAuthCredentials;
 import com.wordpress.metaphorm.authProxy.state.OAuthState;
-
-import oauth.signpost.OAuthConsumer;
 
 /**
  * @author Stian Sigvartsen
@@ -31,14 +30,14 @@ public abstract class AbstractOAuthStateImpl implements OAuthState {
 	
 	private static final long serialVersionUID = 1L;
 
-	public abstract void setConsumer(String oAuthRealm, OAuthConsumer consumer) throws ExpiredStateException;
+	public abstract void setOAuthCredentials(String oAuthRealm, OAuthCredentials oAuthCredentials) throws ExpiredStateException;
 	
-	public OAuthConsumer getOAuthConsumer(String oAuthRealm) throws ExpiredStateException {
+	public OAuthCredentials getOAuthCredentials(String oAuthRealm) throws ExpiredStateException {
 		
-		OAuthConsumer consumer = null;
-		setConsumer(oAuthRealm, consumer);
+		OAuthCredentials oAuthCredentials = null;
+		setOAuthCredentials(oAuthRealm, oAuthCredentials);
 		
-		return consumer;
+		return oAuthCredentials;
 	}
 
 	public abstract void setPAuth(String p_auth) throws ExpiredStateException;

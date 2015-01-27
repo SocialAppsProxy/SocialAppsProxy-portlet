@@ -22,8 +22,6 @@ package com.wordpress.metaphorm.authProxy.state;
 import java.io.Serializable;
 import java.util.List;
 
-import oauth.signpost.OAuthConsumer;
-
 /**
  * @author Stian Sigvartsen
  */
@@ -33,8 +31,8 @@ public interface OAuthState extends Serializable {
 	public static final int AUTHORISE_PHASE = 1;
 	public static final int RESOURCE_PHASE = 2;
 	
-	public void setConsumer(String oAuthRealm, OAuthConsumer consumer) throws ExpiredStateException;
-	public OAuthConsumer getOAuthConsumer(String oAuthRealm) throws ExpiredStateException;
+	public void setOAuthCredentials(String oAuthRealm, OAuthCredentials oAuthCredentials) throws ExpiredStateException;
+	public OAuthCredentials getOAuthCredentials(String oAuthRealm) throws ExpiredStateException;
 		
 	public void setPAuth(String p_auth) throws ExpiredStateException;	
 	public String getPAuth() throws ExpiredStateException;

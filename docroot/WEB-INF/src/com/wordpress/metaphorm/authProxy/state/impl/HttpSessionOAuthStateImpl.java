@@ -24,6 +24,7 @@ import com.liferay.portal.kernel.log.LogFactoryUtil;
 import com.wordpress.metaphorm.authProxy.hook.SessionDestroyAction;
 import com.wordpress.metaphorm.authProxy.state.DependencyListener;
 import com.wordpress.metaphorm.authProxy.state.ExpiredStateException;
+import com.wordpress.metaphorm.authProxy.state.OAuthCredentials;
 import com.wordpress.metaphorm.authProxy.state.OAuthState;
 
 import java.util.Arrays;
@@ -34,8 +35,6 @@ import java.util.List;
 import java.util.Set;
 
 import javax.servlet.http.HttpSession;
-
-import oauth.signpost.OAuthConsumer;
 
 /**
  * @author Stian Sigvartsen
@@ -62,28 +61,34 @@ public class HttpSessionOAuthStateImpl extends AbstractOAuthStateImpl implements
 	}
 	
 	@Override
-	public void setConsumer(String oAuthRealm, OAuthConsumer consumer) throws ExpiredStateException {
-		httpSession.setAttribute("oAuthConsumer-" + oAuthRealm, consumer);
+	public void setOAuthCredentials(String oAuthRealm, OAuthCredentials oAuthCredentials) throws ExpiredStateException {
+		
+		_log.debug("setOAuthCredentials() :: oAuthCredentials" + (oAuthCredentials == null ? " is null" : ".toString() = " + oAuthCredentials.toString()));
+		httpSession.setAttribute("oAuthConsumer-" + oAuthRealm, oAuthCredentials);
 	}
 
 	@Override
-	public OAuthConsumer getOAuthConsumer(String oAuthRealm) throws ExpiredStateException {
+	public OAuthCredentials getOAuthCredentials(String oAuthRealm) throws ExpiredStateException {
 		
 		try {
 			
-			OAuthConsumer consumer = (OAuthConsumer)httpSession.getAttribute("oAuthConsumer-" + oAuthRealm);
+			OAuthCredentials oAuthCredentials = (OAuthCredentials)httpSession.getAttribute("oAuthConsumer-" + oAuthRealm);
 			
-			if (consumer == null) 
-				return super.getOAuthConsumer(oAuthRealm);
+			if (oAuthCredentials == null) 
+				return super.getOAuthCredentials(oAuthRealm);
 			
-			return consumer;
+			return oAuthCredentials;
 		
 		} catch (ClassCastException e) { 
 			
 			// This occurs upon interaction with a HttpSession from a previous app deployment.
 			// Probably because of AbstractOAuthConsumer not implementing Serializable
 			
-			return super.getOAuthConsumer(oAuthRealm);
+			return super.getOAuthCredentials(oAuthRealm);
+		
+		} catch (IllegalStateException e) {
+			
+			throw new ExpiredStateException();
 		}
 	}
 	
@@ -99,22 +104,56 @@ public class HttpSessionOAuthStateImpl extends AbstractOAuthStateImpl implements
 	
 	@Override
 	public void setVerifier(String oAuthRealm, String verifier) throws ExpiredStateException {
-		httpSession.setAttribute("oAuthConsumer-" + oAuthRealm + "-verifier", verifier);
+		try {
+			httpSession.setAttribute("oAuthConsumer-" + oAuthRealm + "-verifier", verifier);
+		} catch (IllegalStateException e) {
+				throw new ExpiredStateException();
+		}
 	}	
 	
 	@Override
 	public String getVerifier(String oAuthRealm) throws ExpiredStateException {
-		return (String)httpSession.getAttribute("oAuthConsumer-" + oAuthRealm + "-verifier");
+		try {
+			return (String)httpSession.getAttribute("oAuthConsumer-" + oAuthRealm + "-verifier");
+		} catch (IllegalStateException e) {
+			throw new ExpiredStateException();
+		}
 	}
 
+	public long getSecondsUntilSessionExpiry() {
+		
+		_log.debug("httpSession.getLastAccessedTime() = " + httpSession.getLastAccessedTime());
+		_log.debug("httpSession.getCreationTime() = " + httpSession.getCreationTime());
+		_log.debug("Difference (millis) = " + (httpSession.getLastAccessedTime() - httpSession.getCreationTime()));
+		
+		return httpSession.getMaxInactiveInterval() - ((httpSession.getLastAccessedTime() - httpSession.getCreationTime())) / 1000;
+	}
+	
 	@Override
 	public boolean isExpired() {
 		
+		StringBuffer sb = new StringBuffer();
+		
+		sb.append("isExpired() invoked for " + this.getClass().getName() + ". This state is linked to HTTPSession " + httpSession.getId());
+		
 		try {
 			httpSession.getCreationTime();
+			
+			sb.append(" and is valid for another " 
+					+ getSecondsUntilSessionExpiry()
+					+ " seconds");
+			
 			return false;
+			
 		} catch (IllegalStateException ise) {
+			
+			sb.append(" which is expired");
+			
 			return true;
+		
+		} finally {
+			
+			_log.debug(sb.toString());
 		}
 	}
 	
@@ -155,7 +194,11 @@ public class HttpSessionOAuthStateImpl extends AbstractOAuthStateImpl implements
 
 	@Override
 	public void setPhase(String oAuthRealm, int phase) throws ExpiredStateException {
-		httpSession.setAttribute("oAuthConsumer-" + oAuthRealm + "-phase", Integer.valueOf(phase));
+		try {
+			httpSession.setAttribute("oAuthConsumer-" + oAuthRealm + "-phase", Integer.valueOf(phase));
+		} catch (IllegalStateException e) {
+			throw new ExpiredStateException();
+		}
 	}
 	
 	@Override

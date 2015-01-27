@@ -21,9 +21,6 @@ package com.wordpress.metaphorm.authProxy.httpClient.impl;
 
 import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
-import com.wordpress.metaphorm.authProxy.OAuthProviderConnection;
-import com.wordpress.metaphorm.authProxy.state.ExpiredStateException;
-import com.wordpress.metaphorm.authProxy.state.OAuthState;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -36,10 +33,6 @@ import java.util.Map;
 
 import javax.servlet.http.HttpServletRequest;
 
-import oauth.signpost.exception.OAuthCommunicationException;
-import oauth.signpost.exception.OAuthExpectationFailedException;
-import oauth.signpost.exception.OAuthMessageSignerException;
-
 /**
  * @author Stian Sigvartsen
  */
@@ -48,57 +41,35 @@ public class OAuthProxyConnectionHttpURLConnectionImpl extends AbstractOAuthProx
 	private HttpServletRequest servletReq;
 	private HttpURLConnection uRLConn;
 	
-	public OAuthProxyConnectionHttpURLConnectionImpl(HttpServletRequest servletReq, OAuthState oAuthState) throws MalformedURLException, IOException {
+	public OAuthProxyConnectionHttpURLConnectionImpl(HttpServletRequest servletReq) throws MalformedURLException, IOException {
 		URL uRL = deriveURL(servletReq);
 		
 		this.servletReq = servletReq;
 		
-		setOAuthState(oAuthState);
-		
 		this.uRLConn = (HttpURLConnection)uRL.openConnection();
+	}
+	
+	public boolean isNegotiatingConnection() {
+		return true;
+	}
+	
+	public HttpURLConnection getHttpURLConnection() {
+		return this.uRLConn;
 	}
 	
 	@Override
 	public URL getRequestedURL() throws MalformedURLException {
 		return new URL(servletReq.getRequestURL().toString());
 	}
-	
-	@Override
-	public URL getOAuthCallbackURL() throws MalformedURLException {
 		
-		String oauth_callback = servletReq.getHeader("oauth_callback");
-		if (oauth_callback == null) {
-			
-			// Use the requested URL as a callback URL (after OAuth authorisation)
-			// FYI: Upon returning, this filter will swap the request token for an access token before requesting the resource
-			oauth_callback = servletReq.getRequestURL() + (servletReq.getQueryString() != null ? "?" + servletReq.getQueryString() : "");
-		}
-		
-		return new URL(oauth_callback);
-	}
-	
 	public void sendRequest() throws IOException {
 		uRLConn.connect();
-	}
-
-	public String getAuthChallengeString() {
-		
-		String authChallengeStr = uRLConn.getHeaderField("Authorization");
-		if (authChallengeStr == null) authChallengeStr = uRLConn.getHeaderField("WWW-Authenticate");
-
-		return authChallengeStr;
 	}
 	
 	public void reset() throws IOException {
 		this.uRLConn = (HttpURLConnection)this.uRLConn.getURL().openConnection();
 	}
 	
-	public void signRequest(OAuthProviderConnection oAuthConn) 
-			throws OAuthMessageSignerException, OAuthExpectationFailedException, OAuthCommunicationException, ExpiredStateException {
-		
-		oAuthConn.sign(this.uRLConn);
-	}
-
 	@Override
 	public InputStream getInputStream() throws IOException {
 		return uRLConn.getInputStream();
